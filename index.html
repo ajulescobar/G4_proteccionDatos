@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Bóveda de Datos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Concepto: una bóveda con nueve estaciones. Navegación lateral, cada estación = definición + laboratorio. */
+:root{
+  --bg:#EDF1F8;--surface:#FFFFFF;--surface2:#F3F6FB;--ink:#0E1A2E;--muted:#556079;--line:#D5DCEA;
+  --accent:#0A8F89;--accent-ink:#06625E;--accent-soft:rgba(10,143,137,.11);--btn:#0A7A75;--btn-ink:#FFFFFF;
+  --amber:#E2A100;--amber-ink:#7C5200;--amber-soft:rgba(226,161,0,.16);
+  --violet:#6D4FE8;--violet-ink:#4F34C4;--violet-soft:rgba(109,79,232,.12);
+  --bad:#DC4545;--bad-ink:#A62626;--bad-soft:rgba(220,69,69,.12);
+  --ok:#1C9962;--ok-ink:#126D45;--ok-soft:rgba(28,153,98,.13);
+  --shadow:0 1px 2px rgba(14,26,46,.06),0 8px 24px rgba(14,26,46,.06);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Figtree','Segoe UI',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#091120;--surface:#111B30;--surface2:#17243D;--ink:#E8EEF9;--muted:#9BA9C4;--line:#253756;
+  --accent:#2CD1C5;--accent-ink:#6BE8DE;--accent-soft:rgba(44,209,197,.13);--btn:#2CD1C5;--btn-ink:#052624;
+  --amber:#FFC043;--amber-ink:#FFD476;--amber-soft:rgba(255,192,67,.14);
+  --violet:#9C88FF;--violet-ink:#B9AAFF;--violet-soft:rgba(156,136,255,.16);
+  --bad:#FF7070;--bad-ink:#FF9C9C;--bad-soft:rgba(255,112,112,.14);
+  --ok:#4FD59A;--ok-ink:#82E6B9;--ok-soft:rgba(79,213,154,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#091120;--surface:#111B30;--surface2:#17243D;--ink:#E8EEF9;--muted:#9BA9C4;--line:#253756;
+  --accent:#2CD1C5;--accent-ink:#6BE8DE;--accent-soft:rgba(44,209,197,.13);--btn:#2CD1C5;--btn-ink:#052624;
+  --amber:#FFC043;--amber-ink:#FFD476;--amber-soft:rgba(255,192,67,.14);
+  --violet:#9C88FF;--violet-ink:#B9AAFF;--violet-soft:rgba(156,136,255,.16);
+  --bad:#FF7070;--bad-ink:#FF9C9C;--bad-soft:rgba(255,112,112,.14);
+  --ok:#4FD59A;--ok-ink:#82E6B9;--ok-soft:rgba(79,213,154,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0;
+  padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+button,input,select,textarea{font:inherit;color:inherit}
+.ic{width:1.25em;height:1.25em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.2em}
+.ic.big{width:34px;height:34px;stroke-width:1.5}
+.shell{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;align-items:start}
+.nav{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;flex-direction:column;gap:8px;padding:4px 10px 16px}
+.brand b{font-family:var(--f-display);font-size:1.35rem;letter-spacing:-.02em;display:flex;gap:8px;align-items:center}
+.pbar{height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .5s}
+.small{font-size:.82rem;color:var(--muted)}
+.ni{display:flex;gap:10px;align-items:center;text-align:left;background:none;border:0;border-radius:10px;padding:8px 10px;cursor:pointer;color:var(--muted);font-weight:500}
+.ni:hover{background:var(--surface)}
+.ni.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);font-weight:700}
+.ni .num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 .78rem var(--f-body);border:1.5px solid var(--line);flex:none}
+.ni.ok .num{background:var(--ok);border-color:var(--ok);color:#fff}
+.ni .num .ic{width:14px;height:14px;stroke-width:3}
+.ni.th{display:none}
+.tbtn{display:inline-flex;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:5px 10px;cursor:pointer;font-size:.8rem;width:max-content}
+main{min-width:0}
+.screen{display:flex;flex-direction:column;gap:22px;min-width:0;animation:in .35s ease}
+.sh{display:flex;flex-direction:column;gap:8px}
+.kick{font:700 .88rem var(--f-body);letter-spacing:.01em;color:var(--accent-ink);margin:0}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,4.4vw,3.1rem);line-height:1.02;letter-spacing:-.025em;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:1.3rem;margin:0 0 4px;letter-spacing:-.01em}
+h3{font:700 .92rem var(--f-body);margin:0 0 4px;color:var(--accent-ink)}
+.lead{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:0}
+p{margin:0 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;min-width:0}
+.well{background:var(--surface2);border-radius:12px;padding:14px;min-width:0}
+.defn{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;background:var(--accent-soft);border-radius:14px;padding:16px 18px;align-items:start}
+.defn.v{background:var(--violet-soft)}.defn.v h3{color:var(--violet-ink)}
+.defn.a{background:var(--amber-soft)}.defn.a h3{color:var(--amber-ink)}
+.defn p{margin:0}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cols3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stack{display:flex;flex-direction:column;gap:8px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+@media(max-width:720px){.cols2,.cols3{grid-template-columns:minmax(0,1fr)}}
+.btn{background:var(--btn);color:var(--btn-ink);border:0;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.btn.bad{background:var(--bad);color:#fff}
+.btn.sm{padding:6px 12px;font-size:.85rem;font-weight:600}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+input[type=text],input:not([type]),select,textarea,input[type=number]{background:var(--surface2);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:96px}
+.mono{font-family:var(--f-mono)}
+.fl{font:600 .86rem var(--f-body);color:var(--muted)}
+.sw{display:flex;gap:10px;align-items:center;cursor:pointer;position:relative;min-width:0}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.knob{width:40px;height:23px;border-radius:20px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.knob::after{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw input:checked+.knob{background:var(--accent)}
+.sw input:checked+.knob::after{transform:translateX(17px)}
+.sw input:focus-visible+.knob{outline:2.5px solid var(--accent);outline-offset:2px}
+.swl{font-size:.92rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.tab{background:none;border:0;border-radius:9px;padding:7px 14px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tab.on{background:var(--accent-soft);color:var(--accent-ink)}
+.chip{display:inline-flex;gap:6px;align-items:center;border-radius:99px;padding:3px 11px;font-size:.8rem;font-weight:600;background:var(--surface2);border:1px solid var(--line)}
+.chip.ok{background:var(--ok-soft);color:var(--ok-ink);border-color:transparent}
+.chip.bad{background:var(--bad-soft);color:var(--bad-ink);border-color:transparent}
+.chip.warn{background:var(--amber-soft);color:var(--amber-ink);border-color:transparent}
+.chip.vi{background:var(--violet-soft);color:var(--violet-ink);border-color:transparent}
+.log{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;animation:pop .35s;font-size:.92rem}
+.log.ok{background:var(--ok-soft);color:var(--ok-ink)}.log.bad{background:var(--bad-soft);color:var(--bad-ink)}.log.warn{background:var(--amber-soft);color:var(--amber-ink)}
+.verdict{margin:6px 0 0;font-weight:600;font-size:.9rem}
+.verdict.ok{color:var(--ok-ink)}.verdict.bad{color:var(--bad-ink)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th{font:700 .82rem var(--f-body);color:var(--muted);text-align:left;padding:8px 10px;white-space:nowrap}
+td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:middle}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:center}
+.hero h1{font-size:clamp(2.1rem,4.8vw,3.4rem)}.lead.sub{font-weight:600;color:var(--ink);font-size:1.25rem}
+.hero-txt{display:flex;flex-direction:column;gap:14px}
+.vsvg{width:100%;max-width:420px;height:auto;justify-self:center}
+.spin{transform-box:view-box;transform-origin:200px 200px;animation:spin 40s linear infinite}
+.spin.rev{animation-direction:reverse;animation-duration:55s}
+.counter{transform-box:fill-box;transform-origin:center;animation:spin 26s linear infinite reverse}
+.o{animation:spin 26s linear infinite}
+@media(max-width:800px){.hero{grid-template-columns:minmax(0,1fr)}.vsvg{max-width:300px}}
+.stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.st{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;position:relative;transition:transform .2s,box-shadow .2s}
+.st:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.st .tile{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center}
+.st b{font-family:var(--f-display);font-size:1.05rem}
+.st span.d{font-size:.85rem;color:var(--muted)}
+.st .dn{position:absolute;right:12px;top:12px}
+/* consent */
+.crow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(40px,.5fr) minmax(0,1fr);gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.track{height:4px;background:var(--line);border-radius:4px;position:relative}
+.pkt{position:absolute;top:-4px;left:0;width:12px;height:12px;border-radius:50%;background:var(--amber);opacity:0}
+.pkt.go{animation:fly .7s ease-in-out}
+@media(max-width:720px){.crow{grid-template-columns:minmax(0,1fr)}.track{display:none}}
+.qbtns{display:flex;gap:10px;flex-wrap:wrap}
+.qcard{animation:pop .3s}
+/* cipher */
+.pipe{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+.pbox{background:var(--surface2);border-radius:12px;padding:14px;min-width:0}
+.parrow{color:var(--muted)}
+@media(max-width:720px){.pipe{grid-template-columns:minmax(0,1fr)}.parrow{transform:rotate(90deg);justify-self:center}}
+.cipher{word-break:break-all;min-height:2.6em;font-size:1rem;margin-top:4px}
+.cipher span{display:inline-block;animation:scr .35s both}
+.num{display:inline-block;background:var(--violet-soft);color:var(--violet-ink);border-radius:6px;padding:1px 7px;margin:2px;font:600 .8rem var(--f-mono);animation:scr .35s both}
+.flow{display:grid;grid-template-columns:auto minmax(30px,1fr) auto minmax(30px,1fr) auto;align-items:center;gap:6px}
+.node{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.8rem;background:var(--surface2);padding:12px;border-radius:12px;min-width:84px}
+.node .ic{width:28px;height:28px}
+.seg{height:6px;border-radius:4px;border:1.5px dashed var(--bad);position:relative}
+.seg.lk{border:0;background:var(--accent)}
+.seg i{position:absolute;top:-5px;width:16px;height:16px;border-radius:50%;background:var(--amber);animation:run 2.4s linear infinite}
+.seg.lk i{background:var(--ok)}
+.seg b{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-size:.7rem}
+/* gates */
+.gates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.gate{background:var(--surface2);border:2px solid transparent;border-radius:14px;padding:14px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;transition:all .3s}
+.gate .ic{width:34px;height:34px}
+.gate.check{border-color:var(--amber);animation:pulse .6s infinite}
+.gate.pass{border-color:var(--ok);background:var(--ok-soft)}
+.gate.fail{border-color:var(--bad);background:var(--bad-soft);animation:shake .4s}
+.gate.off{opacity:.45}
+@media(max-width:560px){.gates{grid-template-columns:minmax(0,1fr)}}
+.phone{width:138px;border:3px solid var(--ink);border-radius:20px;padding:12px 8px;text-align:center;background:var(--surface);position:relative}
+.phone .cd{font:700 1.4rem var(--f-mono);letter-spacing:.06em}
+.phone.dim{opacity:.4}
+/* rbac */
+.cell{width:100%;min-width:56px;border:2px solid transparent;border-radius:10px;padding:8px;cursor:pointer;display:flex;gap:6px;align-items:center;justify-content:center;font-size:.8rem;font-weight:600;background:var(--surface2)}
+.cell.l1{background:var(--amber-soft);color:var(--amber-ink)}
+.cell.l2{background:var(--violet-soft);color:var(--violet-ink)}
+.cell.xs{border-color:var(--bad)}.cell.ms{border-color:var(--amber)}
+tr.hot td{background:var(--bad-soft)}
+tr.hot .cell{animation:pulse .8s infinite}
+.meter{height:10px;border-radius:9px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--bad);transition:width .4s}
+.meter.g i{background:var(--ok)}
+/* data table */
+.dt td.c,.dt td.chg{font-family:var(--f-mono);font-size:.82rem}
+.dt td.chg{background:var(--accent-soft);animation:flip .5s both}
+.dt td.pse{background:var(--violet-soft);animation:flip .5s both}
+.dt td.bad{background:var(--bad-soft)}
+.blur{filter:blur(6px);user-select:none;transition:filter .4s}
+/* net */
+.net{width:100%;height:auto}
+.net .ico{fill:none;stroke:var(--ink);stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round}
+.net text{fill:var(--ink);font:600 11px var(--f-mono)}
+mark{border-radius:4px;padding:0 3px}
+mark.m1{background:var(--bad-soft);color:var(--bad-ink)}mark.m2{background:var(--amber-soft);color:var(--amber-ink)}mark.m3{background:var(--violet-soft);color:var(--violet-ink)}
+.scan{white-space:pre-wrap;word-break:break-word;font-size:.9rem}
+/* laws */
+.lcards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:800px){.lcards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lc{background:var(--surface2);border:2px solid transparent;border-radius:12px;padding:12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;position:relative}
+.lc.sel{border-color:var(--accent)}
+.lc.ap{background:var(--ok-soft)}
+.lc.ap::after{content:"Aplica";align-self:flex-start;font:700 .72rem var(--f-body);color:var(--ok-ink);background:var(--ok-soft);border-radius:99px;padding:1px 9px;animation:pop .3s}
+.lc b{font-family:var(--f-display);font-size:1.2rem}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:.85rem}
+.bar .t{height:18px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar .t i{display:block;height:100%;background:var(--violet);transition:width .4s}
+.bar.w .t i{background:var(--bad)}
+/* life */
+.life{display:flex;gap:8px;overflow-x:auto;padding:4px}
+.ls{flex:1;min-width:120px;background:var(--surface2);border:2px solid transparent;border-radius:12px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;font-size:.85rem;font-weight:600}
+.ls.on{border-color:var(--accent);background:var(--accent-soft)}
+.ls.run{animation:pulse .5s}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:10px;align-items:center;text-align:left;background:var(--surface2);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.step.done{background:var(--ok-soft);border-color:var(--ok);cursor:default}
+.step.shake{animation:shake .4s;border-color:var(--bad)}
+.opt{display:block;width:100%;text-align:left;background:var(--surface2);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;margin-bottom:8px}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok)}.opt.bad{background:var(--bad-soft);border-color:var(--bad)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:all .3s;z-index:40}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes scr{from{opacity:0;transform:translateY(-8px) scale(.6)}to{opacity:1;transform:none}}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fly{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:calc(100% - 12px);opacity:0}}
+@keyframes run{from{left:0}to{left:calc(100% - 16px)}}
+@keyframes flip{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes pop{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@media(max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:12px}
+  .nav{flex-direction:row;overflow-x:auto;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:10px;scrollbar-width:none}
+  .brand{display:none}.ni{white-space:nowrap;flex:none}.ni.th{display:flex}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* ---- v2: más dinamismo y tipografía limpia ---- */
+.screen>*{animation:in .5s both}
+.screen>*:nth-child(2){animation-delay:.05s}.screen>*:nth-child(3){animation-delay:.1s}.screen>*:nth-child(4){animation-delay:.15s}.screen>*:nth-child(5){animation-delay:.2s}
+.btn{transition:transform .15s,filter .2s,box-shadow .2s}.btn:active:not(:disabled){transform:scale(.96)}
+.btn:hover:not(:disabled){box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.card{transition:box-shadow .25s}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface2);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column}
+.stat b{font:800 1.9rem var(--f-display);line-height:1;color:var(--accent-ink)}
+.stat.bad b{color:var(--bad-ink)}
+.stat span{font-size:.8rem;color:var(--muted)}
+.cr{background:var(--surface2);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;border:2px solid transparent}
+.cr.okf{animation:okf .9s}.cr.badf{animation:badf .9s}.cr.flash{animation:flash .5s}
+.crt{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.cra{display:grid;grid-template-columns:auto minmax(30px,1fr);gap:12px;align-items:center}
+.cra .track{display:block}
+.cra .res{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-height:26px}
+@media(max-width:720px){.cra{grid-template-columns:minmax(0,1fr)}.cra .track{display:none}}
+@keyframes okf{0%{border-color:var(--ok);background:var(--ok-soft)}100%{border-color:transparent}}
+@keyframes badf{0%,40%{border-color:var(--bad);background:var(--bad-soft);transform:translateX(0)}10%,30%{transform:translateX(-5px)}20%{transform:translateX(5px)}100%{border-color:transparent}}
+@keyframes flash{0%{background:var(--accent-soft)}}
+.dots{display:flex;gap:8px}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line);transition:all .3s}
+.dots i.cur{background:var(--accent);transform:scale(1.25)}.dots i.ok{background:var(--ok)}.dots i.bad{background:var(--bad)}
+.qc{background:var(--surface2);border-radius:14px;padding:18px 20px;animation:pop .4s;transition:transform .5s ease,opacity .5s}
+.qc p{font-size:1.12rem;margin:6px 0 0;font-weight:500}
+.qc.tl{transform:translateX(-18px);opacity:.55}.qc.tr{transform:translateX(18px);opacity:.55}
+.bk{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;border:2px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 10px;cursor:pointer;transition:all .2s}
+.bk:hover:not(:disabled){transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow)}
+.bk.bp .ic{color:var(--accent-ink)}.bk.bc .ic{color:var(--violet-ink)}
+.bk.ok{border-color:var(--ok);background:var(--ok-soft);animation:pop .4s}
+.bk.bad{border-color:var(--bad);background:var(--bad-soft);animation:shake .4s}
+.bk:disabled{cursor:default}
+.fbx,#qf{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+#qf{margin-top:12px}
+.fbx .log,#qf .log{align-self:stretch}
+.vw{border:2px solid var(--bad);border-radius:12px;overflow:hidden;background:var(--surface2);transition:border-color .3s}
+.vw.prot{border-color:var(--ok)}
+.vwh{display:flex;gap:8px;align-items:center;padding:9px 12px;font-weight:700;font-size:.88rem;background:var(--bad-soft);color:var(--bad-ink)}
+.vw.prot .vwh{background:var(--ok-soft);color:var(--ok-ink)}
+.vwb{padding:12px;font:500 .8rem var(--f-mono);display:flex;flex-direction:column;gap:8px;word-break:break-all;min-height:120px}
+.vwb .small{font-family:var(--f-body)}
+.node.lkd{outline:2px solid var(--ok)}
+.pk{position:absolute;top:-10px;padding:2px 8px;border-radius:99px;font:600 .66rem var(--f-mono);background:var(--amber);color:#2a1a00;white-space:nowrap;animation:pkrun 2.4s linear infinite}
+.seg.lk .pk{background:var(--ok);color:#04210f}
+.seg{overflow:visible}
+@keyframes pkrun{from{left:0;transform:translateX(0)}to{left:100%;transform:translateX(-100%)}}
+.rbtop{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.rbstat{display:flex;flex-direction:column;align-items:center}
+.rbstat b{font:800 2rem var(--f-display);line-height:1;color:var(--accent-ink)}
+.rbstat span{font-size:.78rem;color:var(--muted)}
+.roles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:820px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{background:var(--surface2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;border:2px solid transparent;transition:border-color .3s;min-width:0}
+.role.ok{border-color:var(--ok)}.role.hot{border-color:var(--bad)}
+.rh{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.rh>div{flex:1;min-width:150px}
+.tile2{width:38px;height:38px;border-radius:10px;background:var(--violet-soft);color:var(--violet-ink);display:grid;place-items:center;flex:none}
+.drows{display:flex;flex-direction:column;gap:4px}
+.dr{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:10px;flex-wrap:wrap;transition:background .3s}
+.dr .dn{font-size:.9rem;font-weight:600}.dr em{font-style:normal;font-size:.75rem;font-weight:700;margin-left:4px}
+.dr.sob{background:var(--bad-soft)}.dr.sob em{color:var(--bad-ink)}.dr.fal{background:var(--amber-soft)}.dr.fal em{color:var(--amber-ink)}
+.dr.bl{background:var(--bad-soft);animation:pulse .9s infinite}
+.seg3{display:flex;background:var(--surface);border-radius:10px;padding:2px;gap:2px}
+.s3{border:2px solid transparent;background:none;border-radius:8px;padding:5px 8px;cursor:pointer;display:flex;gap:4px;align-items:center;font-size:.8rem;font-weight:600;color:var(--muted);transition:all .2s}
+.s3 span{display:none}.s3.on span{display:inline}
+.s3:hover{background:var(--surface2)}
+.s3.on.l0{background:var(--surface2);color:var(--ink);border-color:var(--line)}
+.s3.on.l1{background:var(--amber-soft);color:var(--amber-ink);border-color:var(--amber)}
+.s3.on.l2{background:var(--violet-soft);color:var(--violet-ink);border-color:var(--violet)}
+
+.topbar{max-width:1240px;margin:0 auto 18px;display:flex;gap:8px 24px;justify-content:space-between;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 16px}
+.tb-who{display:flex;gap:10px;align-items:center;min-width:0}
+.tb-who>div{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.tb-who b{font-size:.92rem}.tb-who span{font-size:.82rem;color:var(--accent-ink);word-break:break-all;user-select:all}
+.tb-course{font-size:.82rem;color:var(--muted);min-width:0}
+.ng{font:700 .78rem var(--f-body);color:var(--muted);padding:12px 10px 2px}
+.grp{display:flex;flex-direction:column;gap:10px}
+.grp h2{margin:0}
+.rrow{background:var(--surface2);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.rrow .rh2{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.rsw{position:relative;padding-top:4px}
+.rsw u{position:absolute;top:0;width:4px;height:12px;border-radius:2px;background:var(--amber);transform:translateX(-2px)}
+.rsw input[type=range]{width:100%;margin:6px 0 0}
+input[type=range]{accent-color:var(--accent)}
+@media(max-width:900px){.ng{display:none}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.5" r="1.2"/></symbol>
+<symbol id="i-unlock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 7.5-2"/><circle cx="12" cy="15.5" r="1.2"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5.5c0 4.5-3 8-7 9.5-4-1.5-7-5-7-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3-6 7-6s7 2.4 7 6"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.2 2.7-5 6-5s6 1.8 6 5M16 5a3 3 0 0 1 0 6M18 14c2 .6 3 2 3 4"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+<symbol id="i-finger" viewBox="0 0 24 24"><path d="M6 11a6 6 0 0 1 12 0v2"/><path d="M9 20c.8-1.5 1-3 1-5v-4a2 2 0 0 1 4 0v3c0 2 .4 3.6 1.4 5"/><path d="M12 14v2c0 1.4-.2 2.6-.7 3.8M4 15c.3-1.4.4-2.4.4-4"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M4 7l8 6 8-6"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></symbol>
+<symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 8h14"/><path d="M5 8l-3 7a3.5 3.5 0 0 0 6 0zM19 8l-3 7a3.5 3.5 0 0 0 6 0z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5v.5"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 9a14 14 0 0 1 18 0M6 12.5a9.5 9.5 0 0 1 12 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19" r=".8"/></symbol>
+<symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="11" rx="1.8"/><path d="M2 19h20"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M9 8h2M13 8h2M9 12h2M13 12h2M10.5 20.5v-4h3v4"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.5V4.5h8l9 9-8 8z"/><circle cx="8" cy="9" r="1.2"/></symbol>
+<symbol id="i-mask" viewBox="0 0 24 24"><path d="M3 8c3-1.5 6-2 9-2s6 .5 9 2v3c0 5-4 8.5-9 10-5-1.5-9-5-9-10z"/><circle cx="8.5" cy="11" r="1.5"/><circle cx="15.5" cy="11" r="1.5"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></symbol>
+<symbol id="i-cap" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5"/></symbol>
+<symbol id="i-bandit" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="4.5"/><path d="M7.5 8.5h9M5 21c0-3.5 3-6 7-6s7 2.5 7 6"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+</defs></svg>
+<div class="topbar"><div class="tb-who"><svg class="ic big" aria-hidden="true"><use href="#i-user"/></svg><div><b>Docente: Andrés Julián Escobar Cardona</b><span>andres_escobar@cun.edu.co</span></div></div><div class="tb-course">Especialización en Inteligencia de Negocios · Fundamentos de Inteligencia de Negocios y Gobierno de Datos</div></div>
+<div class="shell">
+  <nav class="nav" id="nav" aria-label="Estaciones"></nav>
+  <main id="main"></main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const ic=(n,c='')=>`<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fmt=n=>Math.round(n).toLocaleString('es-CO');
+let timers=[];
+const every=(fn,ms)=>{const t=setInterval(fn,ms);timers.push(t);return t};
+const cleanup=()=>{timers.forEach(clearInterval);timers=[]};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200)}
+let progress=new Set();
+try{const s=localStorage.getItem('boveda-progress');if(s)progress=new Set(JSON.parse(s))}catch(e){}
+function done(id){if(progress.has(id))return;progress.add(id);try{localStorage.setItem('boveda-progress',JSON.stringify([...progress]))}catch(e){}updateNav();toast('Estación completada')}
+
+const ST=[
+ {id:'conceptos',t:'Privacidad y confidencialidad',i:'eye',d:'Clasifica situaciones y prueba un panel de consentimiento.'},
+ {id:'cifrado',t:'Cifrado',i:'lock',d:'Cifra mensajes, prueba claves y mira qué ve un atacante.'},
+ {id:'mfa',t:'Autenticación multifactor',i:'finger',d:'Lanza ataques con contraseña robada contra 1, 2 y 3 factores.'},
+ {id:'rbac',t:'Control de acceso (RBAC)',i:'users',d:'Reparte permisos con mínimo privilegio y mide la exposición.'},
+ {id:'anonimizacion',t:'Anonimizar y tokenizar',i:'mask',d:'Protege una tabla de clientes con tres técnicas distintas.'},
+ {id:'red',t:'Escudo de red: VPN y DLP',i:'wifi',d:'Activa una VPN en un café y frena correos con datos sensibles.'},
+ {id:'leyes',t:'Leyes y cumplimiento',i:'scale',d:'Calcula multas, elige leyes aplicables y minimiza formularios.'},
+ {id:'ciclo',t:'Ciclo de vida e incidentes',i:'clock',d:'Fija la retención y responde a una brecha contra el reloj.'},
+ {id:'mision',t:'Misión final',i:'cap',d:'Ocho preguntas para comprobar lo aprendido.'}
+];
+const GR=[['Conceptos clave',0,1],['Técnicas y herramientas',1,6],['Leyes y regulaciones',6,7],['Revisión de conceptos',7,9]];
+const SCREENS={};
+let current='inicio';
+function updateNav(){
+  const n=$('#nav');
+  n.innerHTML=`<div class="brand"><b>${ic('shield','big')}Bóveda de Datos</b><div class="pbar"><i style="width:${progress.size/9*100}%"></i></div><span class="small">${progress.size} de 9 estaciones completadas</span><button class="tbtn" data-theme-toggle>${ic('sun')} Cambiar tema</button><button class="tbtn" data-reset>${ic('reset')} Reiniciar avance</button></div>`+
+  `<button class="ni ${current==='inicio'?'on':''}" data-go="inicio"><span class="num">${ic('shield')}</span>Inicio</button>`+
+  GR.map(g=>`<span class="ng">${g[0]}</span>`+ST.slice(g[1],g[2]).map((s,k)=>{const i=g[1]+k;return `<button class="ni ${current===s.id?'on':''} ${progress.has(s.id)?'ok':''}" data-go="${s.id}"><span class="num">${progress.has(s.id)?ic('check'):i+1}</span>${s.t}</button>`}).join('')).join('')+
+  `<button class="ni th" data-theme-toggle><span class="num">${ic('sun')}</span>Tema</button><button class="ni th" data-reset><span class="num">${ic('reset')}</span>Reiniciar</button>`;
+}
+function head(el,n,kick,title,lead){el.insertAdjacentHTML('beforeend',`<header class="sh"><p class="kick">Estación ${n} · ${kick}</p><h1>${title}</h1><p class="lead">${lead}</p></header>`)}
+function tabs(root,names,render){
+  const bar=$('.tabs',root);const box=$('.tbox',root);
+  const set=k=>{$$('.tab',bar).forEach(b=>b.classList.toggle('on',b.dataset.t===k));render(k,box)};
+  bar.addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)set(b.dataset.t)});
+  set(names[0]);
+}
+function go(id){
+  if(id!=='inicio'&&!SCREENS[id])id='inicio';
+  current=id;cleanup();
+  const m=$('#main');m.innerHTML='';
+  const el=document.createElement('section');el.className='screen';m.appendChild(el);
+  SCREENS[id](el);updateNav();window.scrollTo({top:0});
+}
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');
+  if(g){if(location.hash.slice(1)===g.dataset.go)go(g.dataset.go);else location.hash=g.dataset.go;return}
+  const rs=e.target.closest('[data-reset]');
+  if(rs){
+    if(rs.dataset.arm){progress=new Set();try{localStorage.removeItem('boveda-progress')}catch(x){}go(current);toast('Avance reiniciado');return}
+    $$('[data-reset]').forEach(b=>{b.dataset.arm='1';b.innerHTML=ic('reset')+' ¿Seguro? Pulsa otra vez'});setTimeout(updateNav,3500);return}
+  if(e.target.closest('[data-theme-toggle]')){
+    const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    r.dataset.theme=dark?'light':'dark';
+  }
+});
+window.addEventListener('hashchange',()=>go(location.hash.slice(1)));
+
+/* ===== INICIO ===== */
+SCREENS.inicio=el=>{
+  const ticks=Array.from({length:60},(_,i)=>`<line x1="200" y1="${i%5?96:92}" x2="200" y2="102" transform="rotate(${i*6} 200 200)" stroke="var(--muted)" stroke-width="${i%5?1:2}"/>`).join('');
+  const chip=(w,t,d)=>`<g class="o" style="transform-box:view-box;transform-origin:200px 200px;animation-delay:-${d}s"><g transform="translate(200 30)"><g class="counter" style="animation-delay:-${d}s"><rect x="${-w/2}" y="-12" width="${w}" height="24" rx="12" fill="var(--surface)" stroke="var(--line)"/><text text-anchor="middle" y="4" font-size="11" font-family="var(--f-mono)" fill="var(--ink)">${t}</text></g></g></g>`;
+  el.innerHTML=`<div class="hero"><div class="hero-txt">
+    <p class="kick">Guía 4 · Laboratorio interactivo Bóveda de Datos</p>
+    <h1>Protección de la privacidad de los datos</h1>
+    <p class="lead sub">Cómo asegurar la privacidad y confidencialidad de los datos</p>
+    <p class="lead">En cada estación lees la definición exacta y después la aplicas: pruebas, ataques y defiendes datos ficticios.</p>
+    <div class="row"><button class="btn" data-go="conceptos">Entrar a la bóveda ${ic('arrow')}</button><span class="small">Personas y datos ficticios. Todo ocurre en tu navegador.</span></div></div>
+    <svg viewBox="0 0 400 400" class="vsvg" role="img" aria-label="Puerta de bóveda con datos orbitando">
+      <defs><radialGradient id="vg" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="var(--surface2)"/><stop offset="1" stop-color="var(--surface)"/></radialGradient></defs>
+      <circle cx="200" cy="200" r="190" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+      <g class="spin"><circle cx="200" cy="200" r="170" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="2 10" stroke-linecap="round"/></g>
+      <g class="spin rev"><circle cx="200" cy="200" r="140" fill="none" stroke="var(--violet)" stroke-width="3" stroke-dasharray="40 16" stroke-linecap="round" opacity=".7"/></g>
+      <circle cx="200" cy="200" r="112" fill="url(#vg)" stroke="var(--line)" stroke-width="2"/>
+      <g class="spin rev" style="animation-duration:90s">${ticks}</g>
+      <g class="spin" style="animation-duration:20s"><line x1="200" y1="200" x2="200" y2="138" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/><line x1="200" y1="200" x2="253" y2="231" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/><line x1="200" y1="200" x2="147" y2="231" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/></g>
+      <circle cx="200" cy="200" r="36" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
+      <use href="#i-lock" x="178" y="178" width="44" height="44" fill="none" stroke="var(--accent-ink)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      ${chip(64,'cédula',0)}${chip(60,'correo',6.5)}${chip(66,'tarjeta',13)}${chip(76,'ubicación',19.5)}
+    </svg></div>
+    <div class="defn">${ic('cap','big')}<div><h3>Objetivo de la unidad</h3><p>Comprender los términos fundamentales y los principios que rigen la protección de los datos en el contexto empresarial, y saber aplicar las mejores prácticas de privacidad y confidencialidad en una organización real.</p></div></div>
+    ${GR.map(g=>`<div class="grp"><h2>${g[0]}</h2><div class="stations">${ST.slice(g[1],g[2]).map((s,k)=>{const i=g[1]+k;return `<button class="st" data-go="${s.id}"><span class="tile">${ic(s.i)}</span><b>${i+1}. ${s.t}</b><span class="d">${s.d}</span>${progress.has(s.id)?`<span class="dn chip ok">${ic('check')}</span>`:''}</button>`}).join('')}</div></div>`).join('')}`;
+};
+
+/* ===== 1 CONCEPTOS ===== */
+const CONSENT=[
+ {k:'mail',l:'Usar mi correo para enviarme boletines',a:'Marketing envía el boletín semanal',on:true},
+ {k:'share',l:'Compartir mi perfil con aliados comerciales',a:'Vender el perfil a un aliado comercial',on:false},
+ {k:'recs',l:'Usar mi historial de compras para recomendaciones',a:'Personalizar ofertas con su historial',on:true},
+ {k:'geo',l:'Guardar mi ubicación en tiempo real',a:'Registrar su ubicación cada 5 minutos',on:false}
+];
+const SC=[
+ {t:'Una clienta pide saber qué datos guarda la empresa sobre ella y con quién los comparte.',a:'p',e:'Es el derecho a saber qué se recopila, cómo se usa y con quién se comparte. Eso es privacidad.'},
+ {t:'Un empleado de marketing abre el archivo de nómina sin tener permiso.',a:'c',e:'Alguien sin autorización accede a información. Eso es confidencialidad.'},
+ {t:'Una app guarda la ubicación de sus usuarios sin pedir su consentimiento.',a:'p',e:'Falta el consentimiento explícito para recopilar datos. Eso es privacidad.'},
+ {t:'Un competidor entra al servidor y copia la lista de precios y los secretos comerciales.',a:'c',e:'Son datos que no son personales, pero críticos. La confidencialidad también los cubre.'},
+ {t:'La política de privacidad no explica con quién se comparten los datos de los usuarios.',a:'p',e:'Falla la transparencia hacia el titular. Eso es privacidad.'},
+ {t:'Los informes financieros viajan por correo sin cifrar y cualquiera en la red puede leerlos.',a:'c',e:'La información queda expuesta a accesos no autorizados. Eso es confidencialidad.'}
+];
+function tween(n,to){const from=+n.dataset.v||0;n.dataset.v=to;const t0=performance.now();const f=t=>{const k=Math.min(1,(t-t0)/450);n.textContent=Math.round(from+(to-from)*k);if(k<1&&n.isConnected)requestAnimationFrame(f)};requestAnimationFrame(f)}
+SCREENS.conceptos=el=>{
+  head(el,1,'Conceptos clave','Privacidad y confidencialidad','Parecen lo mismo y no lo son. Una trata de los derechos de las personas sobre sus datos. La otra trata de quién puede entrar a la información.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="cols2">
+   <div class="defn">${ic('eye','big')}<div><h3>Privacidad de datos</h3><p>Derecho de los individuos a controlar cómo se recopila, utiliza y comparte su información personal. Exige transparencia y consentimiento explícito.</p></div></div>
+   <div class="defn v">${ic('lock','big')}<div><h3>Confidencialidad de datos</h3><p>Garantía de que la información solo sea accesible para quienes tienen la autorización adecuada. También cubre datos no personales, como secretos comerciales.</p></div></div>
+  </div>
+  <section class="card"><div><h2>Lab 1 · Panel de consentimiento</h2><p class="small">Camila decide qué usos permite. La empresa intenta cada acción. Mueve un interruptor y el sistema responde al instante.</p></div>
+   <div class="stats"><div class="stat"><b id="s1">0</b><span>usos permitidos</span></div><div class="stat"><b id="s2">0</b><span>acciones intentadas</span></div><div class="stat bad"><b id="s3">0</b><span>bloqueadas</span></div></div>
+   <div id="cons" class="stack"></div></section>
+  <section class="card"><div><h2>Lab 2 · ¿Privacidad o confidencialidad?</h2><p class="small">Lee la situación y envíala al concepto que le corresponde.</p></div><div id="cls" class="stack"></div></section>`);
+  $('#cons').innerHTML=CONSENT.map(c=>`<div class="cr" data-k="${c.k}"><div class="crt"><label class="sw"><input type="checkbox" ${c.on?'checked':''}><span class="knob"></span><span class="swl">${c.l}</span></label><span class="chip lv"></span></div><div class="cra"><button class="btn ghost sm">${ic('play')} ${c.a}</button><div class="track"><i class="pkt"></i></div><span class="res"></span></div></div>`).join('');
+  let tries=0,blocked=0;
+  const sync=()=>{let n=0;$$('.cr',el).forEach(r=>{const on=$('input',r).checked;if(on)n++;const c=$('.lv',r);c.className='chip lv '+(on?'ok':'bad');c.innerHTML=ic(on?'check':'x')+(on?' Permiso concedido':' Sin permiso')});tween($('#s1'),n);tween($('#s2'),tries);tween($('#s3'),blocked)};
+  $('#cons').addEventListener('change',e=>{const r=e.target.closest('.cr');if(!r)return;$('.res',r).innerHTML='';sync();r.classList.remove('flash');void r.offsetWidth;r.classList.add('flash')});
+  $('#cons').addEventListener('click',async e=>{
+    const b=e.target.closest('button');if(!b)return;
+    const r=b.closest('.cr');const c=CONSENT.find(x=>x.k===r.dataset.k);
+    const p=$('.pkt',r);p.classList.remove('go');void p.offsetWidth;p.classList.add('go');$('.res',r).innerHTML='<span class="small">Consultando consentimiento…</span>';b.disabled=true;
+    await sleep(700);b.disabled=false;if(!el.isConnected)return;
+    const ok=$('input',r).checked;tries++;if(!ok)blocked++;
+    $('.res',r).innerHTML=ok?`<span class="chip ok">${ic('check')} Permitido</span><span class="small">Hay consentimiento. Se respeta la privacidad.</span>`:`<span class="chip bad">${ic('x')} Bloqueado</span><span class="small">No hay consentimiento. Seguir sería violar su privacidad.</span>`;
+    r.classList.remove('okf','badf');void r.offsetWidth;r.classList.add(ok?'okf':'badf');sync();
+  });
+  sync();
+  let i=0,score=0,res=[];const box=$('#cls');
+  const draw=()=>{
+    const dots=`<div class="dots">${SC.map((_,k)=>`<i class="${res[k]===undefined?(k===i?'cur':''):res[k]?'ok':'bad'}"></i>`).join('')}</div>`;
+    if(i>=SC.length){box.innerHTML=dots+`<div class="log ${score>=5?'ok':'warn'}">${ic('cap')}<span><b>${score} de ${SC.length} correctas.</b> ${score>=5?'Distingues bien los dos conceptos.':'Repasa las definiciones de arriba y vuelve a intentarlo.'}</span></div><button class="btn ghost sm" id="again" style="width:max-content">${ic('reset')} Repetir</button>`;done('conceptos');$('#again').onclick=()=>{i=0;score=0;res=[];draw()};return}
+    box.innerHTML=dots+`<div class="qc" id="qc"><span class="small">Situación ${i+1} de ${SC.length}</span><p>${SC[i].t}</p></div>
+     <div class="cols2"><button class="bk bp" data-a="p">${ic('eye','big')}<b>Privacidad</b><span class="small">Derechos del titular</span></button><button class="bk bc" data-a="c">${ic('lock','big')}<b>Confidencialidad</b><span class="small">Acceso autorizado</span></button></div>
+     <div class="fbx" id="fb"></div>`;
+  };
+  box.addEventListener('click',e=>{
+    const b=e.target.closest('[data-a]');if(!b||b.disabled)return;
+    const ok=b.dataset.a===SC[i].a;if(ok)score++;res[i]=ok;
+    $$('[data-a]',box).forEach(x=>x.disabled=true);
+    $('#qc').classList.add(b.dataset.a==='p'?'tl':'tr');
+    b.classList.add(ok?'ok':'bad');if(!ok)$('[data-a="'+SC[i].a+'"]',box).classList.add('ok');
+    $$('.dots i',box)[i].className=ok?'ok':'bad';
+    $('#fb').innerHTML=`<div class="log ${ok?'ok':'bad'}">${ic(ok?'check':'x')}<span><b>${ok?'Correcto.':'No exactamente.'}</b> ${SC[i].e}</span></div><button class="btn sm" id="nx" style="width:max-content">${i+1<SC.length?'Siguiente':'Ver resultado'} ${ic('arrow')}</button>`;
+    $('#nx').onclick=()=>{i++;draw()};
+  });
+  draw();
+  el.insertAdjacentHTML('beforeend',`<div class="well"><b>Para llevar:</b> una empresa necesita las dos. Respetar los derechos del titular (privacidad) y cerrar la puerta a quien no debe entrar (confidencialidad).</div>`);
+};
+/* ===== 2 CIFRADO ===== */
+const ALPHA=" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~áéíóúüñÁÉÍÓÚÜÑ¿¡°€";
+function vig(text,key,dir){
+  if(!key)return text;let out='',j=0;const N=ALPHA.length;
+  for(const ch of text){const i=ALPHA.indexOf(ch);if(i<0){out+=ch;continue}
+    const k=Math.max(0,ALPHA.indexOf(key[j%key.length]));out+=ALPHA[((i+dir*k)%N+N)%N];j++}
+  return out;
+}
+const spans=s=>Array.from(s).map((c,i)=>`<span style="animation-delay:${Math.min(i,40)*22}ms">${c===' '?'&nbsp;':esc(c)}</span>`).join('');
+const mp=(b,e,m)=>{let r=1n;b%=m;while(e>0n){if(e&1n)r=r*b%m;b=b*b%m;e>>=1n}return r};
+const RSA={n:3233n,e:17n,d:2753n,x:1597n};
+SCREENS.cifrado=el=>{
+  head(el,2,'Técnicas y herramientas','Cifrado','Convierte los datos en un formato ilegible para quien no tenga la clave. Aunque alguien los intercepte o los robe, no puede usarlos.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="defn">${ic('lock','big')}<div><h3>Cifrado de datos</h3><p>Técnica que convierte los datos en un formato ilegible para cualquier persona que no tenga la clave de descifrado. <b>Simétrico:</b> la misma clave cifra y descifra. <b>Asimétrico:</b> una clave distinta para cada proceso.</p></div></div>
+  <section class="card"><div class="tabs"><button class="tab" data-t="sim">Simétrico</button><button class="tab" data-t="asi">Asimétrico</button><button class="tab" data-t="flow">En tránsito y en reposo</button></div><div class="tbox stack"></div></section>`);
+  tabs(el,['sim','asi','flow'],(k,box)=>{
+    if(k==='sim'){
+      box.innerHTML=`<p class="small">Cifrado de juguete (tipo Vigenère) para ver la idea. Los sistemas reales usan algoritmos como AES.</p>
+      <div class="cols2"><div class="stack"><label class="fl" for="m1">Mensaje de Ana</label><input id="m1" maxlength="48" value="Nómina de octubre aprobada"><label class="fl" for="k1">Clave de Ana</label><input id="k1" class="mono" maxlength="16" value="BOVEDA"></div>
+      <div class="stack"><label class="fl" for="k2">Clave con la que descifra Bea</label><input id="k2" class="mono" maxlength="16" value="BOVEDA"><div class="row"><button class="btn ghost sm" id="same">Misma clave</button><button class="btn ghost sm" id="wrong">Cambiar una letra</button></div></div></div>
+      <div class="pipe"><div class="pbox"><span class="fl">1 · Texto en el canal (cifrado)</span><div class="cipher mono" id="co"></div></div><div class="parrow">${ic('arrow')}</div><div class="pbox"><span class="fl">2 · Lo que lee Bea</span><div class="cipher mono" id="do"></div><p class="verdict" id="dv"></p></div></div>`;
+      const upd=()=>{const m=$('#m1').value,k1=$('#k1').value,k2=$('#k2').value;const c=vig(m,k1,1),d=vig(c,k2,-1);
+        $('#co').innerHTML=spans(c);$('#do').innerHTML=spans(d);const v=$('#dv');
+        if(!k1){v.className='verdict bad';v.innerHTML=ic('unlock')+' Sin clave no hay cifrado: el texto viaja en claro.'}
+        else if(d===m){v.className='verdict ok';v.innerHTML=ic('check')+' Misma clave: Bea recupera el mensaje.'}
+        else{v.className='verdict bad';v.innerHTML=ic('x')+' Clave distinta: solo sale ruido.';done('cifrado')}};
+      $$('input',box).forEach(i=>i.addEventListener('input',upd));
+      $('#same').onclick=()=>{$('#k2').value=$('#k1').value;upd()};
+      $('#wrong').onclick=()=>{const k=$('#k1').value||'A';const l=k.slice(-1);$('#k2').value=k.slice(0,-1)+(l==='Z'?'A':String.fromCharCode(l.charCodeAt(0)+1));upd()};
+      upd();
+    }
+    if(k==='asi'){
+      box.innerHTML=`<p class="small">RSA de juguete con números pequeños (n = 3233). Sirve para ver la lógica: lo que cierra una clave solo lo abre la otra.</p>
+      <div class="row" style="gap:18px"><span class="chip">${ic('user')} Ana escribe</span>${ic('arrow')}<span class="chip vi">${ic('lock')} Cierra con la clave pública de Bea (e = 17)</span>${ic('arrow')}<span class="chip ok">${ic('key')} Bea abre con su clave privada</span></div>
+      <label class="fl" for="am">Mensaje de Ana</label><input id="am" maxlength="24" value="Hola Bea">
+      <div class="pbox"><span class="fl">Mensaje cifrado (números)</span><div id="ac"></div></div>
+      <span class="fl">Probar descifrar con</span>
+      <div class="row" id="ak"><label class="chip"><input type="radio" name="ak" value="d" checked> Clave privada de Bea (d = 2753)</label><label class="chip"><input type="radio" name="ak" value="e"> La clave pública (e = 17)</label><label class="chip"><input type="radio" name="ak" value="x"> Clave privada de otra persona</label></div>
+      <div class="pbox"><span class="fl">Resultado</span><div class="cipher mono" id="ar"></div><p class="verdict" id="av"></p></div>`;
+      const upd=()=>{const m=$('#am').value;
+        const enc=Array.from(m).map(ch=>{const c=ch.charCodeAt(0);return mp(BigInt(c<3233?c:63),RSA.e,RSA.n)});
+        $('#ac').innerHTML=enc.map((c,i)=>`<b class="num" style="animation-delay:${Math.min(i,30)*30}ms">${c}</b>`).join('');
+        const sel=$('input[name=ak]:checked').value;const key=RSA[sel];
+        const out=enc.map(c=>{const x=Number(mp(c,key,RSA.n));return(x>=32&&x<127)||(x>=160&&x<256)?String.fromCharCode(x):'▒'}).join('');
+        $('#ar').innerHTML=spans(out);const v=$('#av');
+        if(sel==='d'){v.className='verdict ok';v.innerHTML=ic('check')+' Solo la clave privada de Bea abre el mensaje.'}
+        else{v.className='verdict bad';v.innerHTML=ic('x')+' Esta clave no deshace el cifrado. Aunque la clave pública es conocida por todos, no sirve para abrirlo.';done('cifrado')}};
+      $('#am').addEventListener('input',upd);$$('input[name=ak]',box).forEach(r=>r.addEventListener('change',upd));upd();
+    }
+    if(k==='flow'){
+      const REC=['Camila Restrepo · 4532 8811 0042 7719','Mateo Ortiz · 4716 2290 5513 0086','Marta Gómez · 5424 6671 3308 9920'];
+      box.innerHTML=`<p class="small">Activa o desactiva cada protección. Los dos visores muestran en vivo qué ve un atacante en cada punto del camino.</p>
+      <div class="row" style="gap:24px"><label class="sw"><input type="checkbox" id="ft"><span class="knob"></span><span class="swl">Cifrar en tránsito (HTTPS/TLS)</span></label><label class="sw"><input type="checkbox" id="fr"><span class="knob"></span><span class="swl">Cifrar en reposo (disco y base de datos)</span></label></div>
+      <div class="stack"><div class="meter g"><i id="pm" style="width:0"></i></div><span class="small" id="pt"></span></div>
+      <div class="flow" id="fl"></div>
+      <div class="cols2"><div class="vw open" id="v1"></div><div class="vw open" id="v2"></div></div>`;
+      let pi=0;
+      const ct=()=>vig(REC[pi%3],'TLS-clave',1),cr=r=>vig(r,'DISCO-AES',1);
+      const draw=()=>{const t=$('#ft').checked,r=$('#fr').checked;
+        $('#fl').innerHTML=`<div class="node">${ic('laptop')}Dispositivo</div><div class="seg ${t?'lk':''}"><span class="pk"></span><b>${ic(t?'lock':'unlock')}</b></div><div class="node">${ic('globe')}Red</div><div class="seg ${t?'lk':''}"><span class="pk"></span><b>${ic(t?'lock':'unlock')}</b></div><div class="node ${r?'lkd':''}">${ic('db')}Base de datos${ic(r?'lock':'unlock')}</div>`;
+        const v1=$('#v1'),v2=$('#v2');v1.className='vw '+(t?'prot':'open');v2.className='vw '+(r?'prot':'open');
+        v1.innerHTML=`<div class="vwh">${ic('bandit')} Atacante en la red ${ic(t?'lock':'unlock')}</div><div class="vwb"><span id="sn"></span><span class="small">${t?'Solo ve texto cifrado. Sin la clave no sirve.':'Lee los datos tal como viajan.'}</span></div>`;
+        v2.innerHTML=`<div class="vwh">${ic('bandit')} Atacante con el disco robado ${ic(r?'lock':'unlock')}</div><div class="vwb">${REC.map(x=>`<span>${r?spans(cr(x)):esc(x)}</span>`).join('')}<span class="small">${r?'Solo ve texto cifrado. Sin la clave no sirve.':'Lee la base de datos completa.'}</span></div>`;
+        const n=(t?1:0)+(r?1:0);$('#pm').style.width=n*50+'%';
+        $('#pt').textContent=['Sin protección: el atacante lee todo.','Protección parcial: queda un punto débil en la cadena.','Cadena cubierta: el atacante solo ve ruido.'][n];
+        if(n===2)done('cifrado');
+        pk()};
+      const pk=()=>{const t=$('#ft').checked;const s=t?ct():REC[pi%3];
+        $$('.pk',box).forEach(p=>p.textContent=s.slice(0,9)+'…');
+        const sn=$('#sn');if(sn)sn.innerHTML=t?spans(s):esc(s)};
+      $$('input',box).forEach(i=>i.addEventListener('change',draw));draw();
+      every(()=>{pi++;pk()},2400);
+    }
+  });
+  el.insertAdjacentHTML('beforeend',`<div class="well"><b>Cuándo usar cada uno:</b> el simétrico es rápido y sirve para grandes volúmenes de datos guardados. El asimétrico resuelve cómo intercambiar claves sin verse antes. En la práctica se combinan, y el cifrado debe cubrir toda la cadena: en tránsito y en reposo.</div>`);
+};
+
+/* ===== 3 MFA ===== */
+SCREENS.mfa=el=>{
+  head(el,3,'Técnicas y herramientas','Autenticación multifactor','Una contraseña robada no debería bastar. Con más de un factor, el atacante necesita reunir varias cosas distintas.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="defn a">${ic('finger','big')}<div><h3>Autenticación multifactorial (MFA)</h3><p>Método de control de acceso que exige más de una forma de verificación: <b>algo que sabes</b> (contraseña), <b>algo que tienes</b> (teléfono) o <b>algo que eres</b> (huella). Reduce el riesgo de cuentas comprometidas por phishing o robo de contraseñas.</p></div></div>
+  <section class="card"><div><h2>Lab 3 · Ataque a la cuenta de Laura</h2><p class="small">Elige qué factores exige la cuenta y qué logró robar el atacante. Luego lanza el ataque.</p></div>
+  <div class="cols2"><div class="stack"><span class="fl">La cuenta exige</span>
+   <label class="sw"><input type="checkbox" checked disabled><span class="knob"></span><span class="swl">Contraseña (siempre)</span></label>
+   <label class="sw"><input type="checkbox" id="e-phone"><span class="knob"></span><span class="swl">Código en el teléfono</span></label>
+   <label class="sw"><input type="checkbox" id="e-bio"><span class="knob"></span><span class="swl">Huella digital</span></label></div>
+  <div class="stack"><span class="fl">El atacante ya robó</span>
+   <label class="sw"><input type="checkbox" id="s-pw" checked><span class="knob"></span><span class="swl">La contraseña (phishing)</span></label>
+   <label class="sw"><input type="checkbox" id="s-phone"><span class="knob"></span><span class="swl">El teléfono de Laura</span></label>
+   <label class="sw"><input type="checkbox" id="s-bio"><span class="knob"></span><span class="swl">La huella de Laura</span></label></div></div>
+  <div class="gates" id="gates"></div>
+  <div class="row"><button class="btn" id="legit">${ic('user')} Entrar como Laura</button><button class="btn bad" id="atk">${ic('bandit')} Lanzar ataque</button>
+   <div class="phone dim" id="ph" aria-hidden="true"><span class="fl">Authenticator</span><div class="cd" id="cd">••• •••</div><span class="small" id="ct"></span></div></div>
+  <div id="res"></div></section>`);
+  const G=[{k:'pw',i:'key',t:'Algo que sabes',s:'Contraseña'},{k:'phone',i:'phone',t:'Algo que tienes',s:'Código del teléfono'},{k:'bio',i:'finger',t:'Algo que eres',s:'Huella digital'}];
+  const on=k=>k==='pw'||(k==='phone'&&$('#e-phone').checked)||(k==='bio'&&$('#e-bio').checked);
+  const stolen=k=>$('#s-'+(k==='pw'?'pw':k)).checked;
+  const draw=()=>{$('#gates').innerHTML=G.map(g=>`<div class="gate ${on(g.k)?'':'off'}" id="g-${g.k}">${ic(g.i)}<b>${g.t}</b><span class="small">${g.s}</span><span class="chip" id="gs-${g.k}">${on(g.k)?'Exigido':'No exigido'}</span></div>`).join('')};
+  let rid=0;
+  const run=async who=>{
+    const id=++rid;draw();$('#res').innerHTML='';
+    for(const g of G){
+      if(!on(g.k))continue;
+      $('#g-'+g.k).className='gate check';$('#gs-'+g.k).textContent='Verificando…';await sleep(650);
+      if(id!==rid||!el.isConnected)return;
+      const has=who==='legit'||stolen(g.k);
+      if(has){$('#g-'+g.k).className='gate pass';$('#gs-'+g.k).className='chip ok';$('#gs-'+g.k).textContent='Superado'}
+      else{$('#g-'+g.k).className='gate fail';$('#gs-'+g.k).className='chip bad';$('#gs-'+g.k).textContent='Rechazado';
+        $('#res').innerHTML=`<div class="log ok">${ic('shield')}<span><b>Ataque bloqueado</b> en «${g.t.toLowerCase()}». Con la contraseña sola no alcanza, falta ${g.k==='phone'?'el teléfono':'la huella'}.</span></div>`;done('mfa');return}
+    }
+    const n=G.filter(g=>on(g.k)).length;
+    $('#res').innerHTML=who==='legit'?`<div class="log ok">${ic('check')}<span><b>Laura entra.</b> Reunió los ${n} factor${n>1?'es':''} exigido${n>1?'s':''}.</span></div>`:`<div class="log bad">${ic('alert')}<span><b>Cuenta comprometida.</b> ${n===1?'Con un solo factor, la contraseña robada abrió todo.':'El atacante reunió todos los factores exigidos. Cada factor extra solo ayuda si no cae junto con los otros.'}</span></div>`;
+  };
+  $$('input',el).forEach(i=>i.addEventListener('change',draw));
+  $('#legit').onclick=()=>run('legit');$('#atk').onclick=()=>run('atk');draw();
+  let t=0,code='';const newc=()=>{code=String(Math.floor(100000+Math.random()*900000));code=code.slice(0,3)+' '+code.slice(3)};newc();
+  const tick=()=>{const ph=$('#ph');if(!ph)return;const e=$('#e-phone').checked;ph.classList.toggle('dim',!e);
+    t=(t+1)%15;if(t===0)newc();$('#cd').textContent=e?code:'••• •••';$('#ct').textContent=e?`Cambia en ${15-t} s`:'Sin configurar'};
+  every(tick,1000);tick();
+  el.insertAdjacentHTML('beforeend',`<div class="well"><b>Para llevar:</b> MFA no es invencible. Si el atacante también roba el teléfono o la huella, pasa. Por eso los factores deben ser de familias distintas y difíciles de robar juntos.</div>`);
+};
+/* ===== 4 RBAC ===== */
+SCREENS.rbac=el=>{
+  head(el,4,'Técnicas y herramientas','Control de acceso por roles','Cada persona debería ver solo lo que necesita para hacer su trabajo. Ajusta los permisos y mira cómo se encoge el daño de una cuenta robada.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="defn v">${ic('users','big')}<div><h3>RBAC · Control de acceso basado en roles</h3><p>Gestiona el acceso a los datos según las responsabilidades laborales de cada empleado. Solo quien necesita ciertos datos para su trabajo puede verlos o modificarlos, lo que limita la exposición accidental o intencionada.</p></div></div>
+  <section class="card"><div><h2>Lab 4 · Mínimo privilegio</h2><p class="small">Cada rol tiene una tarea. En cada dato elige el nivel justo: <b>Sin acceso</b>, <b>Ver</b> o <b>Editar</b>. Hoy todos pueden editar todo.</p></div>
+  <div class="rbtop"><div class="stack" style="flex:1;min-width:200px"><span class="fl">Exposición total</span><div class="meter"><i id="mx" style="width:100%"></i></div><span class="small" id="mxt"></span></div>
+   <div class="rbstat"><b id="okc">0</b><span>de 4 roles ajustados</span></div>
+   <div class="row"><button class="btn ghost sm" id="hint">${ic('eye')} Mostrar pistas</button><button class="btn ghost sm" id="rst">${ic('reset')} Restablecer</button></div></div>
+  <div class="roles" id="roles"></div><div id="rbres"></div></section>`);
+  const R=[['RR. HH.','users','Liquida y actualiza la nómina de la empresa.'],['Marketing','tag','Diseña campañas y consulta clientes para segmentarlas.'],['TI','laptop','Mantiene los servidores y revisa los registros del sistema.'],['Finanzas','building','Factura y consulta la nómina para armar el presupuesto.']];
+  const D=['Nómina','Clientes','Campañas','Registros del sistema','Facturación'];
+  const NEED=[[2,0,0,0,0],[0,1,2,0,0],[0,0,0,2,0],[1,0,0,0,2]];
+  const L=['Sin acceso','Ver','Editar'],LI=['minus','eye','edit'];
+  let H=R.map(()=>D.map(()=>2)),hint=false,sel=-1;
+  const total=NEED.flat().reduce((a,b)=>a+b,0),maxEx=40-total;
+  const draw=()=>{
+    let exT=0,okN=0;
+    $('#roles').innerHTML=R.map((r,i)=>{
+      let ex=0,ms=0;D.forEach((d,j)=>{ex+=Math.max(0,H[i][j]-NEED[i][j]);ms+=Math.max(0,NEED[i][j]-H[i][j])});exT+=ex;
+      const good=ex===0&&ms===0;if(good)okN++;
+      const st=good?['ok','Ajustado']:ex&&ms?['warn','Revisa permisos']:ex?['bad','Permisos de más']:['warn','Faltan permisos'];
+      const reach=D.filter((d,j)=>H[i][j]>0).length;
+      return`<div class="role ${good?'ok':''} ${sel===i?'hot':''}"><div class="rh"><span class="tile2">${ic(r[1])}</span><div><b>${r[0]}</b><div class="small">${r[2]}</div></div><span class="chip ${st[0]}">${ic(good?'check':'alert')} ${st[1]}</span></div>
+      <div class="drows">${D.map((d,j)=>{const h=H[i][j],n=NEED[i][j];const f=hint?(h>n?'sob':h<n?'fal':''):'';
+        return`<div class="dr ${f} ${sel===i&&h>0?'bl':''}"><span class="dn">${d}${f==='sob'?' <em>sobra</em>':f==='fal'?' <em>falta</em>':''}</span><div class="seg3" role="group" aria-label="${r[0]}: ${d}">${[0,1,2].map(l=>`<button class="s3 ${h===l?'on l'+l:''}" data-i="${i}" data-j="${j}" data-l="${l}" aria-pressed="${h===l}" title="${L[l]}">${ic(LI[l])}<span>${L[l]}</span></button>`).join('')}</div></div>`}).join('')}</div>
+      <button class="btn ${sel===i?'bad':'ghost'} sm" data-c="${i}">${ic('bandit')} ${sel===i?'Cerrar simulación':'Si roban esta cuenta…'}</button>
+      ${sel===i?`<div class="log ${reach>2?'bad':reach?'warn':'ok'}">${ic('alert')}<span><b>Radio de daño: ${reach} de 5 datos.</b> ${reach?D.filter((d,j)=>H[i][j]>0).map(d=>d+' ('+L[H[i][D.indexOf(d)]].toLowerCase()+')').join(', ')+'.':'Esta cuenta no abre ningún dato.'}</span></div>`:''}</div>`}).join('');
+    $('#mx').style.width=exT/maxEx*100+'%';$('#mxt').textContent=`${exT} de ${maxEx} niveles de acceso sobrantes`;
+    tween($('#okc'),okN);
+    $('#rbres').innerHTML=okN===4?`<div class="log ok">${ic('shield')}<span><b>Mínimo privilegio logrado.</b> Cada rol hace su trabajo y nada más. Prueba «Si roban esta cuenta…» y compara el daño con el del inicio.</span></div>`:'';
+    if(okN===4)done('rbac');
+  };
+  el.addEventListener('click',e=>{
+    const s=e.target.closest('.s3');if(s){H[+s.dataset.i][+s.dataset.j]=+s.dataset.l;draw();return}
+    const b=e.target.closest('[data-c]');if(b){sel=sel===+b.dataset.c?-1:+b.dataset.c;draw()}
+  });
+  $('#hint').onclick=()=>{hint=!hint;$('#hint').lastChild.textContent=hint?' Ocultar pistas':' Mostrar pistas';draw()};
+  $('#rst').onclick=()=>{H=R.map(()=>D.map(()=>2));hint=false;sel=-1;draw()};
+  draw();
+  el.insertAdjacentHTML('beforeend',`<div class="well"><b>Para llevar:</b> RBAC protege la confidencialidad y también reduce los errores humanos. Cuanto menos pueda hacer una cuenta, menos pierde la organización cuando esa cuenta cae.</div>`);
+};
+
+/* ===== 5 ANONIMIZACIÓN ===== */
+const PEOPLE=[
+ {n:'Camila Restrepo',age:34,city:'Cali',dep:'Valle',card:'4532 8811 0042 7719',plan:'Premium'},
+ {n:'Mateo Ortiz',age:36,city:'Cali',dep:'Valle',card:'4716 2290 5513 0086',plan:'Básico'},
+ {n:'Marta Gómez',age:52,city:'Medellín',dep:'Antioquia',card:'5424 6671 3308 9920',plan:'Premium'},
+ {n:'Ernesto Cuesta',age:55,city:'Medellín',dep:'Antioquia',card:'4929 1105 7764 3351',plan:'Básico'},
+ {n:'Lucía Prado',age:31,city:'Bogotá',dep:'Cundinamarca',card:'5105 3340 9987 1124',plan:'Premium'}
+];
+const PSE=['USR-4F2A','USR-9C71','USR-B3E8','USR-27D5','USR-E10B'];
+const TOK=['tok_8Fq2xL','tok_Zp41mC','tok_k93TwB','tok_Rv7a0N','tok_3dHy6E'];
+SCREENS.anonimizacion=el=>{
+  head(el,5,'Técnicas y herramientas','Anonimizar, seudonimizar y tokenizar','Tres formas de usar datos sin exponer a las personas. Se parecen y se comportan distinto cuando alguien intenta deshacerlas.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="cols3">
+   <div class="defn">${ic('mask','big')}<div><h3>Anonimización</h3><p>Elimina o modifica los identificadores para que la información no se pueda atribuir a una persona.</p></div></div>
+   <div class="defn v">${ic('tag','big')}<div><h3>Seudonimización</h3><p>Reemplaza identificadores por seudónimos o códigos. Con información adicional se puede volver a vincular.</p></div></div>
+   <div class="defn a">${ic('key','big')}<div><h3>Tokenización</h3><p>Sustituye datos sensibles por un token sin valor propio. Los originales viven en un sistema separado.</p></div></div>
+  </div>
+  <section class="card"><div><h2>Lab 5 · Tabla de clientes (datos ficticios)</h2><p class="small">Aplica cada técnica y mira qué cambia, qué se conserva y qué puede deshacer un atacante.</p></div>
+   <div class="tabs"><button class="tab" data-t="orig">Original</button><button class="tab" data-t="anon">Anonimizar</button><button class="tab" data-t="pseu">Seudonimizar</button><button class="tab" data-t="tok">Tokenizar</button></div>
+   <div class="tw"><table class="dt" id="dt"></table></div><div id="pn" class="stack"></div></section>`);
+  let mode='orig',lvl=1,leak=false;
+  const gen=p=>lvl===1?{a:p.age,c:p.city}:lvl===2?{a:Math.floor(p.age/10)*10+'-'+(Math.floor(p.age/10)*10+9),c:p.dep}:{a:'30-59',c:'Colombia'};
+  const ks=()=>{const g=PEOPLE.map(gen);return g.map(x=>g.filter(y=>y.a===x.a&&y.c===x.c).length)};
+  const table=()=>{
+    const k=ks();const an=mode==='anon';
+    $('#dt').innerHTML=`<tr><th>Nombre</th><th>Edad</th><th>Ciudad</th><th>Tarjeta</th><th>Plan</th>${an?'<th>k</th>':''}</tr>`+PEOPLE.map((p,i)=>{
+      let n=p.n,a=p.age,c=p.city,t=p.card,cl={};
+      if(an){const g=gen(p);n='(eliminado)';t='(eliminado)';a=g.a;c=g.c;cl={n:'chg',t:'chg',a:lvl>1?'chg':'',c:lvl>1?'chg':''}}
+      if(mode==='pseu'){n=leak?p.n:PSE[i];t='(eliminado)';cl={n:leak?'bad':'pse',t:'pse'}}
+      if(mode==='tok'){t=leak?p.card:TOK[i];cl={t:leak?'bad':'chg'}}
+      return`<tr><td class="${cl.n||''}">${n}</td><td class="${cl.a||''}">${a}</td><td class="${cl.c||''}">${c}</td><td class="${cl.t||''} c">${t}</td><td>${p.plan}</td>${an?`<td class="${k[i]===1?'bad':''}"><b>${k[i]}</b></td>`:''}</tr>`}).join('');
+    if(an)metrics();
+  };
+  const metrics=()=>{const k=ks();const mn=Math.min(...k);const u=[100,60,20][lvl-1];
+    const m=$('#mt');if(!m)return;
+    m.innerHTML=`<div class="row"><span class="chip ${mn===1?'bad':'ok'}">k mínimo = ${mn}</span><span class="chip">Riesgo de re-identificación ≈ ${Math.round(100/mn)} %</span><span class="chip vi">Detalle útil para análisis ≈ ${u} % (ilustrativo)</span></div>
+    <div class="log ${k[4]===1?'bad':'ok'}">${ic(k[4]===1?'alert':'shield')}<span>Un atacante sabe que Lucía tiene 31 años y vive en Bogotá. ${k[4]===1?'<b>Solo una fila coincide:</b> la re-identifica aunque no haya nombres.':'<b>Coinciden '+k[4]+' filas:</b> no puede señalar a nadie.'}</span></div>`;
+    if(mn>1)done('anonimizacion')};
+  const panel=()=>{
+    const p=$('#pn');
+    if(mode==='orig')p.innerHTML=`<div class="log bad">${ic('alert')}<span>Así se ve hoy. Cualquiera con acceso identifica a cada persona y copia sus tarjetas.</span></div>`;
+    if(mode==='anon')p.innerHTML=`<div class="stack"><label class="fl" for="lv">Nivel de generalización: <b id="lvn"></b></label><input type="range" id="lv" min="1" max="3" value="${lvl}"><div id="mt" class="stack"></div><p class="small">Quitar nombres no basta: edad y ciudad juntas pueden señalar a una sola persona. Generaliza hasta que cada grupo tenga varias personas. Más generalización protege más y deja menos detalle para analizar.</p></div>`;
+    if(mode==='pseu')p.innerHTML=`<div class="cols2"><div class="well stack"><span class="fl">Tabla de correspondencia (guardada en otro sistema)</span><div class="${leak?'':'blur'}" id="mp">${PEOPLE.map((x,i)=>`<div class="mono small">${PSE[i]} → ${x.n}</div>`).join('')}</div></div>
+      <div class="stack"><label class="sw"><input type="checkbox" id="lk" ${leak?'checked':''}><span class="knob"></span><span class="swl">El atacante consigue la tabla aparte</span></label><div id="lr"></div><p class="small">Un dato seudonimizado sigue siendo dato personal: con la información adicional se vuelve a vincular.</p></div></div>`;
+    if(mode==='tok')p.innerHTML=`<div class="cols2"><div class="well stack"><span class="fl">Bóveda de tokens (sistema separado)</span><div id="mp" class="${leak?'':'blur'}">${PEOPLE.map((x,i)=>`<div class="mono small">${TOK[i]} → ${x.card}</div>`).join('')}</div></div>
+      <div class="stack"><label class="sw"><input type="checkbox" id="lk" ${leak?'checked':''}><span class="knob"></span><span class="swl">El atacante entra a la bóveda de tokens</span></label><div id="lr"></div><button class="btn ghost sm" id="pay" style="width:max-content">${ic('tag')} Cobrar plan a Camila (pasarela autorizada)</button><div id="pr"></div></div></div>`;
+    const lv=$('#lv');if(lv){const nm=['Bajo','Medio','Alto'];const f=()=>{$('#lvn').textContent=nm[lvl-1]};f();lv.oninput=()=>{lvl=+lv.value;f();table()};}
+    const lk=$('#lk');if(lk)lk.onchange=()=>{leak=lk.checked;table();$('#mp')&&$('#mp').classList.toggle('blur',!leak);$$('.blur,.well div',p).length;panel2()};
+    const pay=$('#pay');if(pay)pay.onclick=()=>{$('#pr').innerHTML=`<div class="log ok">${ic('check')}<span>La pasarela envía el token a la bóveda y recibe la tarjeta solo para cobrar. La aplicación nunca la ve.</span></div>`;done('anonimizacion')};
+    table();panel2();
+  };
+  const panel2=()=>{const r=$('#lr');if(!r)return;
+    if(mode==='pseu')r.innerHTML=leak?`<div class="log bad">${ic('alert')}<span><b>5 de 5 personas re-identificadas.</b> Los códigos de la tabla se vincularon a sus nombres.</span></div>`:`<div class="log ok">${ic('shield')}<span>Sin la tabla, el atacante solo ve códigos. Puede seguir el historial de USR-4F2A, pero no sabe quién es.</span></div>`;
+    if(mode==='tok'){r.innerHTML=leak?`<div class="log bad">${ic('alert')}<span><b>Bóveda comprometida:</b> las 5 tarjetas quedan expuestas. Por eso la bóveda va aislada y con acceso mínimo.</span></div>`:`<div class="log ok">${ic('shield')}<span>Robar la base de la aplicación entrega tokens sin valor propio. Sin la bóveda, no sirven.</span></div>`;if(!leak)done('anonimizacion')}
+    if(mode==='pseu'&&!leak)done('anonimizacion')};
+  $('.tabs',el).addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;mode=b.dataset.t;leak=false;$$('.tab',el).forEach(x=>x.classList.toggle('on',x===b));panel()});
+  $$('.tab',el)[0].classList.add('on');panel();
+  el.insertAdjacentHTML('beforeend',`<section class="card"><h2>Comparativa</h2><div class="tw"><table><tr><th>Técnica</th><th>¿Reversible?</th><th>Uso típico</th></tr>
+   <tr><td><b>Anonimización</b></td><td>No</td><td>Salud y análisis de grandes volúmenes</td></tr>
+   <tr><td><b>Seudonimización</b></td><td>Sí, con información adicional</td><td>Investigación médica y programas de fidelización</td></tr>
+   <tr><td><b>Tokenización</b></td><td>Sí, con la bóveda</td><td>Sector financiero y tarjetas de crédito</td></tr></table></div></section>`);
+};
+/* ===== 6 RED: VPN + DLP ===== */
+SCREENS.red=el=>{
+  head(el,6,'Técnicas y herramientas','Escudo de red: VPN y DLP','Dos defensas para cuando los datos se mueven: una cifra el camino, la otra vigila lo que intenta salir.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="cols2"><div class="defn">${ic('wifi','big')}<div><h3>VPN · Red privada virtual</h3><p>Cifra el tráfico entre el dispositivo del usuario y la red de la organización. Protege de interceptaciones y ataques man-in-the-middle, sobre todo en trabajo remoto.</p></div></div>
+  <div class="defn v">${ic('shield','big')}<div><h3>DLP · Prevención de pérdida de datos</h3><p>Herramientas que monitorean y protegen los datos contra filtraciones o accesos no autorizados. Vigilan en tiempo real y generan alertas.</p></div></div></div>
+  <section class="card"><div><h2>Lab 6A · Trabajar desde un café</h2><p class="small">Laura se conecta al sistema de la empresa por el Wi-Fi público. Alguien en la misma red está capturando el tráfico.</p></div>
+  <label class="sw"><input type="checkbox" id="vpn"><span class="knob"></span><span class="swl">Activar VPN</span></label>
+  <svg viewBox="0 0 640 230" class="net" role="img" aria-label="Paquetes viajan de un portátil a la empresa; un atacante observa en el Wi-Fi del café">
+   <path id="route" d="M112 90 H528" stroke="var(--line)" stroke-width="3" stroke-dasharray="6 8" fill="none"/>
+   <rect id="tun" x="108" y="74" width="424" height="32" rx="16" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2" opacity="0"/>
+   <use class="ico" href="#i-laptop" x="50" y="62" width="56" height="56"/><text x="78" y="134" text-anchor="middle">Laura</text>
+   <use class="ico" href="#i-wifi" x="292" y="30" width="56" height="56" style="transform:translateY(-1px)"/><text x="320" y="24" text-anchor="middle">Wi-Fi del café</text>
+   <use class="ico" href="#i-building" x="534" y="62" width="56" height="56"/><text x="562" y="134" text-anchor="middle">Empresa</text>
+   <path d="M320 110 V150" stroke="var(--bad)" stroke-width="2" stroke-dasharray="3 4"/>
+   <use class="ico" href="#i-bandit" x="292" y="150" width="56" height="56" style="stroke:var(--bad)"/>
+   <text id="atk" x="360" y="184" style="fill:var(--bad-ink)"></text>
+   ${[0,1.2,2.4].map(b=>`<g><rect class="pb" x="-28" y="-11" width="56" height="22" rx="11" fill="var(--amber)"/><text class="pt" text-anchor="middle" y="4" style="fill:#2a1a00;font-size:10px">clave=Bov7</text><animateMotion dur="3.6s" repeatCount="indefinite" begin="${b}s"><mpath href="#route"/></animateMotion></g>`).join('')}
+  </svg><div id="vmsg"></div></section>
+  <section class="card"><div><h2>Lab 6B · Filtro DLP de correo saliente</h2><p class="small">Edita el correo y mira qué detecta el sistema. Luego intenta enviarlo.</p></div>
+  <div class="cols2"><div class="stack"><label class="fl" for="em">Correo de Pedro</label><textarea id="em">Hola: te comparto la lista de clientes del trimestre. Cédula de Camila: 1020345678. Tarjeta registrada: 4532 8811 0042 7719. Documento CONFIDENCIAL, no reenviar.</textarea>
+   <label class="fl" for="ds">Destinatario</label><select id="ds"><option value="ext">pedro.externo@correo-personal.com</option><option value="int">pedro@empresa.com (interno)</option></select></div>
+  <div class="stack"><span class="fl">Reglas activas</span>
+   <label class="sw"><input type="checkbox" id="r1" checked><span class="knob"></span><span class="swl">Números de tarjeta (16 dígitos)</span></label>
+   <label class="sw"><input type="checkbox" id="r2" checked><span class="knob"></span><span class="swl">Cédulas (8 a 10 dígitos)</span></label>
+   <label class="sw"><input type="checkbox" id="r3" checked><span class="knob"></span><span class="swl">Palabra «CONFIDENCIAL»</span></label>
+   <span class="fl">Lo que ve el sistema DLP</span><div class="well scan" id="sc"></div></div></div>
+  <div class="row"><button class="btn" id="snd">${ic('mail')} Enviar correo</button><span id="cnt" class="chip"></span></div><div class="stack" id="dl"></div></section>`);
+  const net=()=>{const v=$('#vpn').checked;
+    $('#tun').setAttribute('opacity',v?'1':'0');
+    $$('.pb',el).forEach(r=>r.setAttribute('fill',v?'var(--accent)':'var(--amber)'));
+    $$('.pt',el).forEach(t=>{t.textContent=v?'9f3a·c7e1':'clave=Bov7';t.style.fill=v?'#fff':'#2a1a00'});
+    $('#vmsg').innerHTML=v?`<div class="log ok">${ic('lock')}<span><b>Con VPN</b> el tráfico viaja cifrado hasta la red de la empresa. El atacante captura paquetes, pero no puede leerlos.</span></div>`:`<div class="log bad">${ic('alert')}<span><b>Sin VPN</b> cualquiera en el mismo Wi-Fi puede capturar el tráfico y leer usuario y contraseña (ataque man-in-the-middle).</span></div>`;
+    if(v)done('red')};
+  $('#vpn').onchange=net;net();
+  const rnd=()=>Array.from({length:16},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join('');
+  every(()=>{const a=$('#atk');if(!a)return;a.textContent='Ve: '+($('#vpn').checked?rnd():'usuario=laura&clave=Bov7')},700);
+  const RX=/(\b(?:\d{4}[ -]?){3}\d{4}\b)|(\b\d{8,10}\b)|(CONFIDENCIAL)/gi;
+  const scan=()=>{const t=$('#em').value;const on=[$('#r1').checked,$('#r2').checked,$('#r3').checked];let html='',last=0,n=0,m;RX.lastIndex=0;
+    while((m=RX.exec(t))){const g=m[1]?0:m[2]?1:2;html+=esc(t.slice(last,m.index));
+      if(on[g]){n++;html+=`<mark class="m${g==0?1:g==1?2:3}">${esc(m[0])}</mark>`}else html+=esc(m[0]);last=m.index+m[0].length}
+    html+=esc(t.slice(last));$('#sc').innerHTML=html;$('#cnt').className='chip '+(n?'warn':'ok');$('#cnt').innerHTML=ic(n?'alert':'check')+' '+n+' dato'+(n===1?'':'s')+' sensible'+(n===1?'':'s')+' detectado'+(n===1?'':'s')+(n?($('#ds').value==='ext'?' · se bloquearía':' · se registraría'):'');return n};
+  $$('#em,#r1,#r2,#r3',el).forEach(i=>i.addEventListener('input',scan));$$('#r1,#r2,#r3',el).forEach(i=>i.addEventListener('change',scan));scan();$('#ds').addEventListener('change',scan);
+  $('#snd').onclick=()=>{const n=scan();const ext=$('#ds').value==='ext';const t=new Date().toLocaleTimeString('es-CO');let c,txt;
+    if(n&&ext){c='ok';txt=`<b>Envío bloqueado.</b> El correo sale a un dominio externo con ${n} dato(s) sensible(s). Se notifica al equipo de seguridad.`;done('red')}
+    else if(n){c='warn';txt=`<b>Enviado con alerta.</b> Es un destinatario interno, pero queda registro de ${n} dato(s) sensible(s) para auditoría.`}
+    else{c='bad';txt='<b>Enviado.</b> No se detectó nada sensible. Si la regla estaba apagada, el dato se fue sin que nadie lo notara.'}
+    $('#dl').insertAdjacentHTML('afterbegin',`<div class="log ${c}">${ic(c==='ok'?'shield':c==='warn'?'alert':'mail')}<span>${t} · ${txt}</span></div>`);while($('#dl').children.length>3)$('#dl').lastChild.remove()};
+  el.insertAdjacentHTML('beforeend',`<div class="well"><b>Para llevar:</b> la VPN cuida el trayecto y el DLP cuida la salida. Ninguna de las dos reemplaza a las personas: la capacitación continua es igual de esencial.</div>`);
+};
+
+/* ===== 7 LEYES ===== */
+SCREENS.leyes=el=>{
+  head(el,7,'Leyes y regulaciones','Leyes y cumplimiento','Cumplir no es solo evitar multas. Es demostrar que la organización trata los datos con responsabilidad.');
+  const LAW=[
+   {id:'ue',n:'GDPR',z:'Unión Europea · 2018',a:'Aplica a empresas dentro de la UE y también a quienes procesan datos de residentes europeos, estén donde estén.',d:'Consentimiento explícito, información clara del uso y derechos de acceso, corrección y eliminación.',s:'Hasta el 4 % de los ingresos anuales globales o 20 millones de euros, lo que sea mayor.'},
+   {id:'co',n:'Ley 1581',z:'Colombia · 2012',a:'Marco similar al GDPR para los titulares de datos en Colombia. Regulador: Superintendencia de Industria y Comercio (SIC).',d:'Acceso, rectificación, cancelación y oposición. Consentimiento previo, salvo base legal o contractual. En el texto de la ley se expresan como derechos a conocer, actualizar, rectificar y suprimir.',s:'La SIC puede sancionar con multas de hasta 2.000 salarios mínimos mensuales (art. 23).'},
+   {id:'ca',n:'CCPA',z:'California, EE. UU. · 2018',a:'Residentes de California. Primera ley de protección de datos a gran escala en Estados Unidos.',d:'Saber qué se recopiló, cómo se usó y con quién se compartió. Pedir la eliminación y optar por no participar en la venta a terceros.',s:'Sanciones significativas por incumplimiento.'},
+   {id:'br',n:'LGPD',z:'Brasil · 2020',a:'Datos personales de ciudadanos brasileños, con reglas similares a las del GDPR.',d:'Reglas de recolección, uso y protección parecidas al GDPR.',s:'Multas de hasta el 2 % de los ingresos de la empresa, con tope de 50 millones de reales por infracción.'}];
+  el.insertAdjacentHTML('beforeend',`
+  <div class="defn a">${ic('scale','big')}<div><h3>Cumplimiento normativo</h3><p>Conocer las regulaciones locales e internacionales sobre datos personales y alinear con ellas las políticas y los procedimientos. Incluye políticas internas, un Responsable de Protección de Datos (DPO) en organizaciones con grandes volúmenes de datos, capacitación y herramientas de monitoreo.</p></div></div>
+  <section class="card"><div><h2>Lab 7A · ¿Qué leyes te aplican?</h2><p class="small">Marca dónde viven tus clientes. Las leyes aplicables se iluminan. Toca una tarjeta para ver el detalle.</p></div>
+  <div class="row"><label class="chip"><input type="checkbox" class="rg" value="ue"> Clientes en la UE</label><label class="chip"><input type="checkbox" class="rg" value="co" checked> En Colombia</label><label class="chip"><input type="checkbox" class="rg" value="ca"> En California</label><label class="chip"><input type="checkbox" class="rg" value="br"> En Brasil</label></div>
+  <div class="lcards" id="lc"></div><div class="well stack" id="ld"></div></section>
+  <section class="card"><div><h2>Lab 7B · Multa máxima del GDPR</h2><p class="small">Mueve los ingresos anuales globales y mira cuál de los dos topes manda.</p></div>
+  <label class="fl" for="rv">Ingresos anuales globales: <b id="rvv"></b></label><input type="range" id="rv" min="10" max="2000" step="10" value="120">
+  <div class="bars" id="gb"></div><p class="small" id="gt"></p></section>
+  <section class="card"><div><h2>Lab 7C · Minimización de datos</h2><p class="small">Solo se recopila lo necesario para el propósito. Elige un propósito y deja el formulario con los campos justos.</p></div>
+  <div class="cols2"><div class="stack"><label class="fl" for="pp">Propósito del formulario</label><select id="pp"><option value="b">Enviar un boletín semanal</option><option value="d">Despachar un pedido a domicilio</option><option value="f">Abrir una cuenta de fidelización</option></select><div class="stack" id="ff"></div></div>
+  <div class="stack"><div id="mr"></div><button class="btn ghost sm" id="mz" style="width:max-content">${ic('shield')} Aplicar minimización</button></div></div></section>
+  <div class="well"><b>Privacy by Design:</b> en vez de añadir la privacidad al final, se integra desde el diseño de cada sistema o proceso. Ante una brecha, el GDPR y la CCPA exigen informar a las autoridades y a los titulares afectados.</div>`);
+  let sel='co';const ap=()=>$$('.rg',el).filter(c=>c.checked).map(c=>c.value);
+  const lc=()=>{const a=ap();$('#lc').innerHTML=LAW.map(l=>`<button class="lc ${a.includes(l.id)?'ap':''} ${sel===l.id?'sel':''}" data-l="${l.id}"><b>${l.n}</b><span class="small">${l.z}</span></button>`).join('');
+    const l=LAW.find(x=>x.id===sel);$('#ld').innerHTML=`<div><span class="fl">Alcance</span><p>${l.a}</p></div><div><span class="fl">Derechos y obligaciones</span><p>${l.d}</p></div><div><span class="fl">Sanciones</span><p style="margin:0">${l.s}</p></div>`;
+    if(a.length>=2)done('leyes')};
+  el.addEventListener('click',e=>{const b=e.target.closest('.lc');if(b){sel=b.dataset.l;lc()}});$$('.rg',el).forEach(c=>c.onchange=lc);lc();
+  const gd=()=>{const r=+$('#rv').value;$('#rvv').textContent=fmt(r)+' M€';const p=r*.04,m=Math.max(p,20),top=Math.max(m,40);
+    $('#gb').innerHTML=`<div class="bar ${p>=20?'w':''}"><span>4 % de ingresos</span><div class="t"><i style="width:${p/top*100}%"></i></div><b class="mono">${p.toFixed(1)} M€</b></div><div class="bar ${p<20?'w':''}"><span>Tope fijo</span><div class="t"><i style="width:${20/top*100}%"></i></div><b class="mono">20 M€</b></div>`;
+    $('#gt').innerHTML=`<b>Multa máxima: ${m.toFixed(1)} M€.</b> ${p>=20?'Con estos ingresos el 4 % supera los 20 M€.':'Con estos ingresos el 4 % no llega a 20 M€, así que manda el tope fijo. El punto de cruce son 500 M€.'}`};
+  $('#rv').oninput=gd;gd();
+  const F=[['mail','Correo electrónico'],['name','Nombre completo'],['cc','Cédula'],['bd','Fecha de nacimiento'],['addr','Dirección'],['tel','Teléfono'],['inc','Ingresos mensuales']];
+  const NEEDF={b:['mail'],d:['name','addr','tel','mail'],f:['mail','name','tel']};
+  const ff=()=>{$('#ff').innerHTML=F.map(f=>`<label class="sw"><input type="checkbox" data-f="${f[0]}" checked><span class="knob"></span><span class="swl">${f[1]}</span></label>`).join('');$$('[data-f]',el).forEach(c=>c.onchange=mr);mr()};
+  const mr=()=>{const nd=NEEDF[$('#pp').value];const on=$$('[data-f]',el).filter(c=>c.checked).map(c=>c.dataset.f);
+    const ex=on.filter(k=>!nd.includes(k)),ms=nd.filter(k=>!on.includes(k));
+    $('#mr').innerHTML=`<div class="row"><span class="chip ${ex.length?'bad':'ok'}">${ex.length} campo(s) de más</span><span class="chip ${ms.length?'warn':'ok'}">${ms.length} campo(s) que faltan</span></div>`+(ex.length?`<div class="log bad">${ic('alert')}<span>Sobran: ${ex.map(k=>F.find(f=>f[0]===k)[1]).join(', ')}. Cada dato extra es más riesgo si hay una filtración.</span></div>`:'')+(ms.length?`<div class="log warn">${ic('alert')}<span>Faltan para el propósito: ${ms.map(k=>F.find(f=>f[0]===k)[1]).join(', ')}.</span></div>`:'')+(!ex.length&&!ms.length?`<div class="log ok">${ic('shield')}<span><b>Minimización lograda.</b> Solo se recopila lo necesario.</span></div>`:'');
+    if(!ex.length&&!ms.length)done('leyes')};
+  $('#pp').onchange=ff;$('#mz').onclick=()=>{const nd=NEEDF[$('#pp').value];$$('[data-f]',el).forEach(c=>c.checked=nd.includes(c.dataset.f));mr()};ff();
+};
+/* ===== 8 CICLO ===== */
+SCREENS.ciclo=el=>{
+  head(el,8,'Revisión de conceptos','Ciclo de vida e incidentes','Los datos nacen, se usan, se guardan y deben morir. Y aun con todo bien hecho, algún día habrá una brecha: lo que importa es qué tan rápido y en qué orden se reacciona.');
+  el.insertAdjacentHTML('beforeend',`
+  <div class="defn">${ic('clock','big')}<div><h3>Política de retención y gestión de incidentes</h3><p><b>Retención:</b> define cuánto tiempo se almacenan los datos y cuándo se eliminan de forma segura. <b>Incidentes:</b> un plan de respuesta que detecta, contiene y mitiga, notifica a los afectados, aplica medidas correctivas y revisa los protocolos.</p></div></div>
+  <section class="card"><div><h2>Lab 8A · Recorre el ciclo de vida</h2><p class="small">Toca una etapa o pulsa reproducir.</p></div>
+  <div class="life" id="lf"></div><div class="well" id="lt"></div><div><button class="btn ghost sm" id="pl">${ic('play')} Reproducir ciclo</button></div></section>
+  <section class="card"><div><h2>Lab 8B · Política de retención por tipo de dato</h2><p class="small">Cada tipo de dato se guarda para una finalidad. Define cuánto tiempo lo conservas: el justo para cumplirla. La marca ámbar indica el tiempo necesario. Los plazos son ilustrativos; el real lo fija la norma aplicable y el área jurídica o contable.</p></div>
+  <div id="rr" class="stack"></div>
+  <div class="stats"><div class="stat bad"><b id="rx">0</b><span>registros expuestos si hoy hay una filtración</span></div><div class="stat"><b id="rp">0</b><span>% menos que sin política</span></div><div class="stat"><b id="rok">0</b><span>de 4 tipos de dato ajustados</span></div></div>
+  <div class="row"><button class="btn" id="bd">${ic('trash')} Aplicar política y borrar</button><button class="btn ghost sm" id="br">${ic('reset')} Guardar todo (sin política)</button></div><div id="rm"></div></section>
+  <section class="card"><div><h2>Lab 8C · Responde a la brecha</h2><p class="small">09:14. El sistema DLP avisa que 4.200 registros de clientes salieron hacia una IP desconocida. Toca los pasos en el orden correcto. Cada error cuesta 12 horas y el GDPR da 72 horas para notificar.</p></div>
+  <div class="row"><span class="chip" id="hr"></span></div><div class="steps" id="sp"></div><div id="ir"></div></section>`);
+  const S=[
+   {i:'user',t:'Recolección',d:'Solo lo necesario y con consentimiento explícito. Aquí se aplica la minimización.',c:['Consentimiento','Minimización','Aviso de privacidad']},
+   {i:'db',t:'Almacenamiento',d:'Los datos se guardan cifrados y se accede por roles, con MFA para los administradores.',c:['Cifrado en reposo','RBAC','MFA']},
+   {i:'users',t:'Uso',d:'El análisis se hace con datos anonimizados o seudonimizados y el DLP vigila las salidas.',c:['Anonimización','DLP','VPN']},
+   {i:'clock',t:'Retención',d:'Se conservan solo durante el tiempo que fija la política. Guardar de más aumenta el riesgo.',c:['Política de retención','Revisión periódica']},
+   {i:'trash',t:'Eliminación segura',d:'Al final del ciclo, el borrado seguro evita que información sensible quede disponible para accesos no autorizados.',c:['Borrado seguro','Evidencia de eliminación']}];
+  let at=0;const lf=()=>{$('#lf').innerHTML=S.map((s,i)=>`<button class="ls ${i===at?'on':''}" data-s="${i}">${ic(s.i)}${i+1}. ${s.t}</button>`).join('');
+    const s=S[at];$('#lt').innerHTML=`<p><b>${s.t}.</b> ${s.d}</p><div class="row">${s.c.map(c=>`<span class="chip ok">${ic('shield')} ${c}</span>`).join('')}</div>`};
+  $('#lf').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b){at=+b.dataset.s;lf()}});
+  $('#pl').onclick=async()=>{for(let i=0;i<S.length;i++){at=i;lf();await sleep(1100);if(!el.isConnected)return}done('ciclo')};lf();
+  const RT=[
+   {n:'Suscriptores del boletín',f:'enviar el boletín a quien sigue suscrito',min:12,rate:800,i:'mail'},
+   {n:'Pedidos y garantías',f:'atender reclamos y garantías de las compras',min:36,rate:1200,i:'tag'},
+   {n:'Facturación',f:'cumplir obligaciones contables y tributarias',min:60,rate:900,i:'building'},
+   {n:'Grabaciones de cámaras',f:'revisar incidentes de seguridad en la tienda',min:1,rate:3000,i:'eye'}];
+  const fm=m=>{const y=Math.floor(m/12),r=m%12;if(!y)return m+(m===1?' mes':' meses');return y+(y===1?' año':' años')+(r?' y '+r+(r===1?' mes':' meses'):'')};
+  $('#rr').innerHTML=RT.map((r,i)=>`<div class="rrow"><div class="rh2"><b>${ic(r.i)} ${r.n}</b><span class="chip" id="rs${i}"></span></div><span class="small">Finalidad: ${r.f}. Tiempo necesario: <b>${fm(r.min)}</b>. Llegan unos ${fmt(r.rate)} registros al mes.</span>
+   <div class="rsw"><u style="left:${r.min/120*100}%"></u><input type="range" id="rsl${i}" min="1" max="120" value="120" aria-label="Retención de ${r.n}"></div><span class="small" id="rt${i}"></span></div>`).join('');
+  const base=RT.reduce((a,r)=>a+r.rate*120,0);
+  const upd=()=>{let sum=0,okN=0;
+    RT.forEach((r,i)=>{const m=+$('#rsl'+i).value;sum+=r.rate*m;const c=$('#rs'+i);
+      let k,t;if(m<r.min){k='warn';t='Borras antes de tiempo'}else if(m<=Math.max(r.min*1.5,r.min+1)){k='ok';t='Justo';okN++}else{k='bad';t='Guardas de más'}
+      c.className='chip '+k;c.innerHTML=ic(k==='ok'?'check':'alert')+' '+t;
+      $('#rt'+i).innerHTML=`Conservas <b>${fm(m)}</b>: ${fmt(r.rate*m)} registros guardados.`});
+    tween($('#rx'),sum);tween($('#rp'),Math.round((1-sum/base)*100));tween($('#rok'),okN);
+    if(okN===4)done('ciclo');return sum};
+  $$('#rr input').forEach(x=>x.addEventListener('input',()=>{$('#rm').innerHTML='';upd()}));upd();
+  $('#br').onclick=()=>{RT.forEach((r,i)=>$('#rsl'+i).value=120);$('#rm').innerHTML='';upd()};
+  $('#bd').onclick=()=>{const sum=upd();const gone=base-sum;
+    $('#rm').innerHTML=gone>0?`<div class="log ok">${ic('trash')}<span><b>Borrado seguro ejecutado:</b> ${fmt(gone)} registros eliminados. Si hoy hubiera una filtración, ya no estarían disponibles para accesos no autorizados.</span></div>`:`<div class="log warn">${ic('alert')}<span>No hay nada que borrar: guardas todo. Acorta la retención de los datos que ya cumplieron su finalidad.</span></div>`};
+  const ST2=[{k:'det',t:'Detectar y confirmar el incidente'},{k:'con',t:'Contener: revocar credenciales y aislar el sistema'},{k:'not',t:'Notificar a la autoridad y a los titulares afectados'},{k:'cor',t:'Aplicar medidas correctivas'},{k:'rev',t:'Revisar los protocolos para evitar futuros incidentes'}];
+  const ORD=['det','con','not','cor','rev'];const SH=[ST2[3],ST2[2],ST2[4],ST2[0],ST2[1]];
+  let nx=0,hrs=3;
+  const sp=()=>{$('#hr').className='chip '+(hrs>72?'bad':hrs>48?'warn':'ok');$('#hr').innerHTML=ic('clock')+' Reloj: '+hrs+' h de 72 h';
+    $('#sp').innerHTML=SH.map(s=>`<button class="step ${ORD.indexOf(s.k)<nx?'done':''}" data-k="${s.k}">${ic(ORD.indexOf(s.k)<nx?'check':'arrow')} ${s.t}</button>`).join('')};
+  $('#sp').addEventListener('click',e=>{const b=e.target.closest('.step');if(!b||b.classList.contains('done'))return;
+    if(b.dataset.k===ORD[nx]){nx++;hrs+=[2,6,10,0,0][nx-1];
+      if(b.dataset.k==='not'){$('#ir').innerHTML=hrs<=72?`<div class="log ok">${ic('check')}<span>Notificación enviada a las ${hrs} h, dentro del plazo.</span></div>`:`<div class="log bad">${ic('alert')}<span>Notificación enviada a las ${hrs} h: fuera del plazo de 72 h.</span></div>`}
+      if(nx===5){$('#ir').insertAdjacentHTML('beforeend',`<div class="log ${hrs<=72?'ok':'warn'}">${ic('shield')}<span><b>Incidente cerrado.</b> Orden: detectar, contener, notificar, corregir y revisar.</span></div>`);if(hrs<=72)done('ciclo')}
+      sp()}
+    else{hrs+=12;b.classList.add('shake');$('#hr').textContent='Reloj: '+hrs+' h de 72 h';setTimeout(()=>sp(),450);toast('Todavía no: primero '+ST2.find(s=>s.k===ORD[nx]).t.toLowerCase())}});
+  sp();
+};
+
+/* ===== 9 MISIÓN ===== */
+const QZ=[
+ {q:'Una persona pide saber qué datos tiene la empresa sobre ella y con quién los comparte. ¿Qué concepto está en juego?',o:['Confidencialidad','Privacidad de datos','Cifrado','Prevención de pérdida de datos'],a:1,e:'La privacidad es el derecho a controlar cómo se recopila, usa y comparte la información personal.',s:'conceptos'},
+ {q:'¿Qué caracteriza al cifrado asimétrico?',o:['Usa la misma clave para cifrar y descifrar','Usa claves diferentes para cada proceso','No necesita ninguna clave','Solo sirve para datos en reposo'],a:1,e:'En el asimétrico, lo que cierra una clave lo abre la otra.',s:'cifrado'},
+ {q:'Un atacante obtiene la contraseña de un empleado por phishing. ¿Qué control reduce más el riesgo de que entre?',o:['Autenticación multifactorial','Una política de retención','Anonimización','Un aviso de privacidad'],a:0,e:'La contraseña sola ya no basta: faltaría algo que la persona tiene o es.',s:'mfa'},
+ {q:'¿Cuál es la idea central del control de acceso basado en roles?',o:['Todos los empleados ven todo para trabajar más rápido','Cada persona accede solo a lo que necesita para su trabajo','Solo TI puede ver datos sensibles','Los datos se borran cada año'],a:1,e:'Es el principio de mínimo privilegio: limita la exposición accidental o intencionada.',s:'rbac'},
+ {q:'Una técnica reemplaza los identificadores por códigos, y con información adicional se puede volver a vincular a la persona. ¿Cuál es?',o:['Anonimización','Seudonimización','Cifrado de disco','VPN'],a:1,e:'La seudonimización es reversible con la información adicional. La anonimización no lo es.',s:'anonimizacion'},
+ {q:'Una VPN, ¿qué protege principalmente?',o:['Los datos guardados en el servidor','El tráfico entre el dispositivo y la red de la organización','La retención de datos','El consentimiento de los usuarios'],a:1,e:'Cifra el trayecto y evita interceptaciones y ataques man-in-the-middle.',s:'red'},
+ {q:'¿Cuál es la multa máxima del GDPR?',o:['Hasta 2 % de los ingresos','4 % de los ingresos anuales globales o 20 millones de euros, lo que sea mayor','Siempre 20 millones de euros','Solo una advertencia'],a:1,e:'Manda el mayor de los dos topes. El cruce está en 500 millones de euros de ingresos.',s:'leyes'},
+ {q:'Tras detectar una brecha de datos, ¿qué debe hacerse primero?',o:['Notificar a la prensa','Contenerla y mitigar sus efectos','Revisar los protocolos del año siguiente','Esperar a que pase el fin de semana'],a:1,e:'Detectar y contener va antes que notificar, corregir y revisar.',s:'ciclo'}
+];
+SCREENS.mision=el=>{
+  head(el,9,'Revisión de conceptos','Misión final','Ocho preguntas que recorren toda la unidad. Si fallas alguna, te mando de vuelta a la estación correspondiente.');
+  el.insertAdjacentHTML('beforeend',`<section class="card" id="qz"></section>`);
+  let i=0,sc=0,miss=[];const box=$('#qz');
+  const draw=()=>{
+    if(i>=QZ.length){const pct=sc/QZ.length;const lvl=sc>=7?'Guardián de la bóveda':sc>=4?'Vigilante de datos':'Aprendiz de la bóveda';const C=2*Math.PI*52;
+      box.innerHTML=`<div class="row" style="gap:24px"><svg viewBox="0 0 120 120" width="130" height="130" role="img" aria-label="${sc} de ${QZ.length}"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--line)" stroke-width="10"/><circle cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct)}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s"/><text x="60" y="68" text-anchor="middle" font-size="26" font-weight="800" font-family="var(--f-display)" fill="var(--ink)">${sc}/${QZ.length}</text></svg>
+      <div class="stack"><h2>${lvl}</h2><p class="lead">${miss.length?'Repasa estas estaciones:':'Sin errores. Dominas la unidad.'}</p><div class="row">${miss.map(s=>{const x=ST.find(y=>y.id===s);return`<button class="btn ghost sm" data-go="${s}">${ic(x.i)} ${x.t}</button>`}).join('')}</div><button class="btn sm" id="rq" style="width:max-content">${ic('reset')} Intentar de nuevo</button></div></div>`;
+      done('mision');$('#rq').onclick=()=>{i=0;sc=0;miss=[];draw()};return}
+    const q=QZ[i];
+    box.innerHTML=`<div class="qcard"><div class="pbar" style="margin-bottom:12px"><i style="width:${i/QZ.length*100}%"></i></div><span class="fl">Pregunta ${i+1} de ${QZ.length}</span><h2 style="margin:6px 0 12px">${q.q}</h2>${q.o.map((o,k)=>`<button class="opt" data-k="${k}">${o}</button>`).join('')}<div id="qf"></div></div>`;
+  };
+  box.addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b)return;const q=QZ[i];const k=+b.dataset.k;const ok=k===q.a;
+    $$('.opt',box).forEach(x=>{x.disabled=true;if(+x.dataset.k===q.a)x.classList.add('ok')});if(!ok){b.classList.add('bad');miss.push(q.s)}else sc++;
+    $('#qf').innerHTML=`<div class="log ${ok?'ok':'bad'}">${ic(ok?'check':'x')}<span><b>${ok?'Correcto.':'No es esa.'}</b> ${q.e}</span></div><button class="btn sm" id="nq" style="width:max-content;margin-top:10px">${i+1<QZ.length?'Siguiente':'Ver resultado'} ${ic('arrow')}</button>`;
+    $('#nq').onclick=()=>{i++;draw()}});
+  draw();
+};
+
+/* ===== arranque ===== */
+go(location.hash.slice(1)||'inicio');
+
+</script>
+</body>
+</html>
